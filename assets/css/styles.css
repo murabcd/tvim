@@ -1,0 +1,111 @@
+/* Body */
+body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+/* Buttons */
+input,
+button {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #343a40;
+  padding: 20px;
+  overflow-y: scroll;
+  box-shadow: 2px 0px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.sidebar h2 {
+  font-size: 24px;
+  color: #f8f9fa;
+  margin-bottom: 10px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.sidebar h2:hover {
+  color: #007bff;
+}
+
+/* Main Content */
+main {
+  margin-left: 270px;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Dashboard */
+.task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.task span {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.task button {
+  margin-right: 5px;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  main {
+    margin-left: 220px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  main {
+    margin-left: 0;
+  }
+}
