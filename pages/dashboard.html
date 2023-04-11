@@ -12,14 +12,17 @@
     <!-- Sidebar -->
     <div id="sidebar"></div>
 
+    <!-- Logout button -->
+    <header>
+      <button id="logoutButton">Logout</button>
+    </header>
+
     <!-- Main content -->
     <main>
       <h1>What tasks do you want to add?</h1>
       <input type="text" id="taskInput" placeholder="Enter new task" />
-      <button onclick="addTask()">Add Task</button>
+      <button id="addButton">Add task</button>
     </main>
-
-    <button id="logoutButton">Logout</button>
 
     <!-- Ongoing tasks -->
     <h2>Ongoing tasks</h2>
@@ -33,5 +36,6 @@
     <script type="module" src="/assets/js/firebase.js"></script>
     <script type="module" src="/assets/js/app.js"></script>
     <script type="module" src="/assets/js/dashboard.js"></script>
+    <script type="module" src="/assets/js/authGuard.js"></script>
   </body>
 </html>

@@ -2,27 +2,75 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="canonical" href="https://mindnotes.netlify.app" />
+    <title>Mindnotes - Best team notes for the B2B SaaS</title>
+    <meta name="title" content="Mindnotes - Best team notes for the B2B SaaS" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mindnotes.netlify.app" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simple To-Do App</title>
 
     <!-- CSS styles -->
-    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/landing-styles.css" />
+
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-R4YFQCG4R2"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-R4YFQCG4R2");
+    </script>
   </head>
   <body>
-    <h1>Welcome to Simple To-Do App</h1>
-    <p>
-      A simple and easy-to-use application to manage your tasks and be more
-      productive.
-    </p>
+    <!-- Header with login buttons -->
+    <header>
+      <h3 class="logo">Mindnotes</h3>
+      <div class="button-container">
+        <a href="/pages/login.html" class="login-button">
+          <button class="login">Login</button>
+        </a>
+        <a href="/pages/signup.html" class="signup-button">
+          <button class="signup">Sign up</button>
+        </a>
+      </div>
+    </header>
 
-    <!-- Login buttons-->
-    <a href="/pages/signup.html">
-      <button>Sign Up</button>
-    </a>
-    <a href="/pages/signin.html">
-      <button>Sign In</button>
-    </a>
-    <button id="signInWithGoogle">Sign In with Google</button>
+    <section class="hero">
+      <h1>Note just another notes.</h1>
+      <p>
+        Mindnotes is a simple and easy-to-use tool to manage your tasks and be
+        more productive.
+      </p>
+      <a href="/pages/signup.html" class="cta-button">
+        <button class="get-started-for-free">Get Started for Free</button>
+      </a>
+    </section>
+
+    <section class="about-creator">
+      <h2>About the Creator</h2>
+      <p>
+        Hi, I'm Murad, the creator of Mindnotes. As a solo entrepreneur, I built
+        this tool to solve my own pain points and help others stay organized and
+        productive. I'm always looking for feedback and suggestions to improve
+        the platform, so don't hesitate to reach out!
+      </p>
+    </section>
+
+    <footer>
+      <p>&copy; 2023 Mindnotes. All rights reserved.</p>
+      <!-- <nav>
+        <a href="/pages/privacy.html">Privacy Policy</a>
+        <a href="/pages/terms.html">Terms of Service</a>
+        <a href="/pages/contact.html">Contact Us</a>
+      </nav> -->
+    </footer>
 
     <!-- Scripts -->
     <script type="module" src="/assets/js/firebase.js"></script>

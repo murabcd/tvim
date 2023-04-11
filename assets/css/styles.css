@@ -1,6 +1,62 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap");
+
+/* Header */
+header {
+  display: flex;
+  justify-content: flex-start;
+  padding: 1rem;
+}
+
+/* Login page back button */
+.back-button {
+  background-color: transparent;
+  color: #020202;
+  border: 1px solid #020202;
+  font-size: 20px;
+  padding: 12px 24px 14px;
+  cursor: pointer;
+  transition: 0.3s;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.back-button:hover {
+  border-color: #13c995;
+  color: #13c995;
+}
+
+/* SignIn and SignUp buttons */
+#signInForm button,
+#signUpForm button {
+  background-color: #13c995;
+  color: white;
+  font-size: 20px;
+  padding: 12px 24px 14px;
+  border: none;
+}
+
+#signInForm button:hover,
+#signUpForm button:hover {
+  background-color: #0fb485;
+}
+
+/* Google Sign-in button */
+#signInWithGoogle {
+  background-color: #ffffff;
+  color: #000000;
+  font-size: 20px;
+  padding: 12px 40px 14px;
+  border: 1px solid #ccc;
+}
+
+#signInWithGoogle:hover {
+  background-color: #f1f1f1;
+}
+
 /* Body */
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Roboto", sans-serif;
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
@@ -8,24 +64,11 @@ body {
 }
 
 /* Buttons */
-input,
-button {
+input {
   padding: 10px;
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-button {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #0069d9;
-  border-color: #0062cc;
 }
 
 /* Sidebar */
@@ -50,7 +93,11 @@ button:hover {
 }
 
 .sidebar h2:hover {
-  color: #007bff;
+  color: #0fb485;
+}
+
+.sidebar a {
+  text-decoration: none;
 }
 
 /* Main Content */
@@ -82,8 +129,40 @@ h1 {
   margin-right: 10px;
 }
 
+button {
+  background-color: #0fb485;
+  color: white;
+  border-color: #13c995;
+  cursor: pointer;
+}
+
+#logoutButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
 .task button {
   margin-right: 5px;
+}
+
+/* Settings */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-container label,
+.form-container input,
+.form-container button {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 10px;
+}
+
+.form-container input {
+  margin-top: 5px;
 }
 
 /* Responsive */

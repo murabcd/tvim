@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js"; // Import getFirestore from here
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAuYCI-WOOcapTLKibEev2cXo1SC8lz8k",
@@ -20,6 +21,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 async function signUp(email, password) {
   try {
@@ -38,7 +40,6 @@ async function signUp(email, password) {
 }
 
 // Email authentication
-
 async function signIn(email, password) {
   try {
     const userCredential = await signInWithEmailAndPassword(
@@ -58,7 +59,6 @@ async function signIn(email, password) {
 }
 
 // Google Sign-In authentication
-
 async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   try {
@@ -119,4 +119,5 @@ export {
   updateUserEmail,
   updateUserPassword,
   uploadAvatar,
+  db, // Export Firestore database
 };

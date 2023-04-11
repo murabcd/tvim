@@ -7,14 +7,41 @@
 
     <!-- CSS styles -->
     <link rel="stylesheet" href="/assets/css/styles.css" />
+
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-R4YFQCG4R2"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-R4YFQCG4R2");
+    </script>
   </head>
   <body>
-    <h1>Sign in</h1>
+    <!-- Back to landing button-->
+    <header>
+      <a href="/index.html">
+        <button class="back-button">Back</button>
+      </a>
+    </header>
+
+    <h1>Login</h1>
     <form id="signInForm">
       <input type="email" id="signInEmail" placeholder="Email" />
       <input type="password" id="signInPassword" placeholder="Password" />
       <button type="submit">Sign in</button>
     </form>
+
+    <!-- Google Sign-in bitton -->
+    <p>
+      <button id="signInWithGoogle">Login with Google</button>
+    </p>
 
     <!-- Scripts -->
     <script type="module" src="/assets/js/firebase.js"></script>

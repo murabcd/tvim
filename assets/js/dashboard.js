@@ -8,7 +8,7 @@ if (logoutButton) {
     try {
       await signOut(auth);
       console.log("Sign out successful");
-      window.location.href = "/signin.html";
+      window.location.href = "/index.html";
     } catch (error) {
       console.error("Sign out error:", error);
     }
