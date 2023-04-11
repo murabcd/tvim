@@ -11,8 +11,8 @@ import {
   orderBy,
 } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
 
-// Load sidebar HTML code into the sidebar div
 document.addEventListener("DOMContentLoaded", function () {
+  // Load sidebar HTML code into the sidebar div
   fetch("/pages/sidebar.html")
     .then((response) => response.text())
     .then((html) => {
@@ -21,16 +21,71 @@ document.addEventListener("DOMContentLoaded", function () {
         sidebar.innerHTML = html;
       }
     });
+
+  // Get DOM elements
+  const taskInput = document.getElementById("taskInput");
+  const ongoingTasks = document.getElementById("ongoingTasks");
+  const completedTasks = document.getElementById("completedTasks");
+  const addButton = document.getElementById("addButton");
+
+  if (taskInput) {
+    taskInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        addTask(taskInput);
+      }
+    });
+  }
+
+  if (addButton && taskInput) {
+    addButton.addEventListener("click", () => addTask(taskInput));
+  }
+
+  if (ongoingTasks && completedTasks) {
+    // Load tasks from Firestore
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        const tasksQuery = query(
+          collection(db, "tasks"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+
+        onSnapshot(tasksQuery, (querySnapshot) => {
+          ongoingTasks.innerHTML = "";
+          completedTasks.innerHTML = "";
+
+          querySnapshot.forEach((doc) => {
+            const taskData = doc.data();
+            const taskId = doc.id;
+            const taskName = taskData.name;
+            const isCompleted = taskData.completed;
+
+            const taskElement = createTaskElement(
+              taskId,
+              taskName,
+              isCompleted
+            );
+            if (isCompleted) {
+              completedTasks.appendChild(taskElement);
+              const completeButton = taskElement.querySelector(
+                "button:nth-child(3)"
+              );
+              if (completeButton) {
+                completeButton.textContent = "Redo";
+                completeButton.onclick = () => redoTask(taskElement);
+              }
+            } else {
+              ongoingTasks.appendChild(taskElement);
+            }
+          });
+        });
+      }
+    });
+  }
 });
 
-// Get DOM elements
-const taskInput = document.getElementById("taskInput");
-const ongoingTasks = document.getElementById("ongoingTasks");
-const completedTasks = document.getElementById("completedTasks");
-const addButton = document.getElementById("addButton");
-
 // Add a new task
-function addTask() {
+function addTask(taskInput) {
   const taskName = taskInput.value.trim();
   if (taskName) {
     // Save the task to Firestore
@@ -128,19 +183,6 @@ function deleteTask(task) {
   const taskId = task.dataset.taskId;
   const taskRef = doc(db, "tasks", taskId);
   deleteDoc(taskRef);
-}
-
-if (taskInput) {
-  taskInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      addTask();
-    }
-  });
-}
-
-// Other functions and code (addTask, createTaskElement, renameTask, etc.)
-if (addButton) {
-  addButton.addEventListener("click", addTask);
 }
 
 // Load tasks from Firestore
