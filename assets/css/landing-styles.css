@@ -210,3 +210,26 @@ footer a:hover {
     flex-basis: 100%;
   }
 }
+
+@media screen and (max-width: 480px) {
+  .header-container {
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    margin-bottom: 10px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .button-container {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .login-button,
+  .signup-button {
+    display: block;
+    margin-bottom: 10px;
+  }
+}
