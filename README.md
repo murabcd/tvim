@@ -14,11 +14,9 @@ This is a simple To-Do application built using HTML, CSS, and JavaScript. It als
 To set up the project locally, follow these steps:
 
 1. Clone the repository:
-git clone https://github.com/your-username/simple-to-do-app.git
-
+   git clone https://github.com/your-username/simple-to-do-app.git
 
 2. Change into the project directory:
-
 
 3. Open the `index.html` file in your browser.
 
@@ -40,4 +38,3 @@ If you have any questions, feel free to reach out to me:
 
 - [LinkedIn](https://www.linkedin.com/in/abdulkadyr0v/)
 - [Twitter](https://twitter.com/abdulkadyr0v)
-
