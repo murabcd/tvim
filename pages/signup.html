@@ -47,5 +47,14 @@
     <script type="module" src="/assets/js/firebase.js"></script>
     <script type="module" src="/assets/js/app.js"></script>
     <script type="module" src="/assets/js/login.js"></script>
+
+    <!-- Redirect to the main page if login -->
+
+    <script type="module">
+      import { checkUserLoggedInAndRedirect } from "/assets/js/firebase.js";
+      checkUserLoggedInAndRedirect(
+        "https://mindnotes.netlify.app/pages/dashboard.html"
+      );
+    </script>
   </body>
 </html>

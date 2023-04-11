@@ -121,3 +121,13 @@ export {
   uploadAvatar,
   db, // Export Firestore database
 };
+
+// Check if the user is already logged in
+export function checkUserLoggedInAndRedirect(redirectPath) {
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      // Redirect the user to the main app page if they are already logged in
+      window.location.href = redirectPath;
+    }
+  });
+}
