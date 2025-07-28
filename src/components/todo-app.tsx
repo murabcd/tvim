@@ -1,31 +1,49 @@
+import { useState, useEffect } from "react";
+import { useRouteContext } from "@tanstack/react-router";
+
 import { useTodos } from "@/hooks/use-todos";
 import { useVimKeys } from "@/hooks/use-vim-keys";
-import { TodoList } from "./todo-list";
-import { Input } from "./ui/input";
-import { useState } from "react";
+
+import type { Todo } from "@/lib/schema";
+
+import { Input } from "@/components/ui/input";
+import { TodoList } from "@/components/todo-list";
+
+interface RouteContext {
+	todos: Todo[];
+}
 
 export function TodoApp() {
+	const { todos: initialTodos } = useRouteContext({
+		from: "/",
+	}) as RouteContext;
 	const [mode, setMode] = useState<"normal" | "insert" | "command">("normal");
 	const [inputValue, setInputValue] = useState("");
 	const [commandValue, setCommandValue] = useState("");
 
 	const {
 		state,
+		loading,
 		moveSelection,
 		toggleTodo,
 		deleteTodo,
 		addTodo,
 		goToTop,
 		goToBottom,
-		saveTodos,
-		loadTodos,
-		clearTodos,
 		yankTodo,
 		pasteTodo,
 		undo,
 		redo,
 		selectAll,
+		initializeTodos,
 	} = useTodos();
+
+	// Initialize todos from server-side data
+	useEffect(() => {
+		if (initialTodos && initialTodos.length > 0) {
+			initializeTodos(initialTodos);
+		}
+	}, [initialTodos, initializeTodos]);
 
 	const handleSubmitTodo = (position?: "below" | "above") => {
 		if (inputValue.trim()) {
@@ -144,7 +162,8 @@ export function TodoApp() {
 							<div className="flex items-center p-2">
 								<div className="w-8 text-center text-muted-foreground">~</div>
 								<div className="flex-1 px-2 text-muted-foreground">
-									{mode.toUpperCase()} MODE - {state.todos.length} todos
+									{mode.toUpperCase()} MODE - {state.todos.length} todos{" "}
+									{loading && "(loading...)"}
 								</div>
 							</div>
 						)}
