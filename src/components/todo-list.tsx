@@ -5,9 +5,14 @@ import { Check, Circle } from "lucide-react";
 interface TodoListProps {
 	todos: Todo[];
 	selectedIndex: number;
+	visualSelection?: { start: number; end: number };
 }
 
-export function TodoList({ todos, selectedIndex }: TodoListProps) {
+export function TodoList({
+	todos,
+	selectedIndex,
+	visualSelection,
+}: TodoListProps) {
 	if (todos.length === 0) {
 		return (
 			<div className="p-8 text-center text-muted-foreground">
@@ -16,40 +21,52 @@ export function TodoList({ todos, selectedIndex }: TodoListProps) {
 		);
 	}
 
+	const isVisuallySelected = (index: number): boolean => {
+		if (!visualSelection) return false;
+		return index >= visualSelection.start && index <= visualSelection.end;
+	};
+
 	return (
 		<div className="divide-y divide-border">
-			{todos.map((todo, index) => (
-				<div
-					key={todo.id}
-					className={`flex items-center gap-3 p-3 ${
-						index === selectedIndex
-							? "bg-accent text-accent-foreground"
-							: "hover:bg-muted/50"
-					}`}
-				>
-					<div className="w-8 text-right text-sm text-muted-foreground">
-						{index + 1}
-					</div>
+			{todos.map((todo, index) => {
+				const isSelected = index === selectedIndex;
+				const isVisualSelected = isVisuallySelected(index);
 
-					<div className="flex items-center gap-2">
-						{todo.completed ? (
-							<Check className="w-4 h-4 text-green-500" />
-						) : (
-							<Circle className="w-4 h-4 text-muted-foreground" />
-						)}
-					</div>
-
+				return (
 					<div
-						className={`flex-1 ${todo.completed ? "line-through text-muted-foreground" : ""}`}
+						key={todo.id}
+						className={`flex items-center gap-3 p-3 ${
+							isVisualSelected
+								? "bg-muted-foreground/10 text-foreground"
+								: isSelected
+									? "bg-accent text-accent-foreground"
+									: "hover:bg-muted/50"
+						}`}
 					>
-						{todo.text}
-					</div>
+						<div className="w-8 text-right text-sm text-muted-foreground">
+							{index + 1}
+						</div>
 
-					<div className="text-xs text-muted-foreground">
-						{todo.created.toLocaleDateString()}
+						<div className="flex items-center gap-2">
+							{todo.completed ? (
+								<Check className="w-4 h-4 text-green-500" />
+							) : (
+								<Circle className="w-4 h-4 text-muted-foreground" />
+							)}
+						</div>
+
+						<div
+							className={`flex-1 ${todo.completed ? "line-through text-muted-foreground" : ""}`}
+						>
+							{todo.text}
+						</div>
+
+						<div className="text-xs text-muted-foreground">
+							{todo.created.toLocaleDateString()}
+						</div>
 					</div>
-				</div>
-			))}
+				);
+			})}
 		</div>
 	);
 }

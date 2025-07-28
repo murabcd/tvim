@@ -26,7 +26,7 @@
   - Type-safe SQL ORM for TypeScript
   - Used for database schema migrations and type-safe queries
 
-## Deploy Your Own
+## Deploy your own
 
 You can deploy your own version of TVIM to Vercel with one click:
 

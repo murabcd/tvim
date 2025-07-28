@@ -111,9 +111,6 @@ export function useTodos() {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
 			}
 		},
-		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
-		},
 	});
 
 	// Delete todo mutation with optimistic update

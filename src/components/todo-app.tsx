@@ -18,9 +18,11 @@ export function TodoApp() {
 	const { todos: initialTodos } = useRouteContext({
 		from: "/",
 	}) as RouteContext;
-	const [mode, setMode] = useState<"normal" | "insert" | "command">("normal");
+	const [mode, setMode] = useState<"normal" | "insert" | "command" | "visual">("normal");
 	const [inputValue, setInputValue] = useState("");
 	const [commandValue, setCommandValue] = useState("");
+	const [visualStart, setVisualStart] = useState<number>(0);
+	const [visualEnd, setVisualEnd] = useState<number>(0);
 
 	const {
 		state,
@@ -65,6 +67,44 @@ export function TodoApp() {
 		setMode("normal");
 	};
 
+	const handleVisualMode = () => {
+		setMode("visual");
+		setVisualStart(state.selectedIndex);
+		setVisualEnd(state.selectedIndex);
+	};
+
+	const handleVisualMoveUp = () => {
+		const newEnd = Math.max(0, visualEnd - 1);
+		setVisualEnd(newEnd);
+	};
+
+	const handleVisualMoveDown = () => {
+		const newEnd = Math.min(state.todos.length - 1, visualEnd + 1);
+		setVisualEnd(newEnd);
+	};
+
+	const getVisualSelection = () => {
+		const start = Math.min(visualStart, visualEnd);
+		const end = Math.max(visualStart, visualEnd);
+		return { start, end };
+	};
+
+	const handleVisualToggle = () => {
+		const { start, end } = getVisualSelection();
+		for (let i = start; i <= end; i++) {
+			toggleTodo(i);
+		}
+		setMode("normal");
+	};
+
+	const handleVisualDelete = () => {
+		const { start, end } = getVisualSelection();
+		for (let i = end; i >= start; i--) {
+			deleteTodo(i);
+		}
+		setMode("normal");
+	};
+
 	useVimKeys({
 		mode,
 		onMoveUp: () => moveSelection("up"),
@@ -86,6 +126,11 @@ export function TodoApp() {
 		onDeleteLine: () => deleteTodo(state.selectedIndex),
 		onYankTodo: yankTodo,
 		onPasteTodo: pasteTodo,
+		onVisualMode: handleVisualMode,
+		onVisualMoveUp: handleVisualMoveUp,
+		onVisualMoveDown: handleVisualMoveDown,
+		onVisualToggle: handleVisualToggle,
+		onVisualDelete: handleVisualDelete,
 	});
 
 	return (
@@ -95,20 +140,20 @@ export function TodoApp() {
 					<h1 className="text-2xl font-bold mb-2">TVIM</h1>
 					<div className="text-xs text-muted-foreground space-y-1">
 						<p>
-							<strong>Navigation:</strong> j/k/h/l (move) | gg/G (top/bottom) |
-							←/→ (arrow keys)
+							<strong>Navigation:</strong> j/k (up/down) | gg/G (top/bottom) |
+							↑/↓ (arrow keys)
 						</p>
 						<p>
 							<strong>Insert:</strong> i/I (insert) | o/O (new line) | a/A
 							(append) | ESC/Ctrl+C (exit)
 						</p>
 						<p>
-							<strong>Edit:</strong> x/Space (toggle) | d/dd/D (delete) | u
+							<strong>Edit:</strong> x/Space (toggle) | dd/D (delete) | u
 							(undo) | Ctrl+R (redo)
 						</p>
 						<p>
-							<strong>Copy/Paste:</strong> y/yy (yank) | p/P (paste) | v/V
-							(select all/toggle)
+							<strong>Copy/Paste:</strong> y/yy (yank) | p/P (paste) | v
+							(visual mode)
 						</p>
 						<p>
 							<strong>Command:</strong> : (command mode) | :add &lt;text&gt;
@@ -135,7 +180,11 @@ export function TodoApp() {
 							))}
 						</div>
 					) : (
-						<TodoList todos={state.todos} selectedIndex={state.selectedIndex} />
+						<TodoList 
+							todos={state.todos} 
+							selectedIndex={state.selectedIndex}
+							visualSelection={mode === "visual" ? getVisualSelection() : undefined}
+						/>
 					)}
 
 					<div className="border-t border-border bg-muted/30">
@@ -182,6 +231,7 @@ export function TodoApp() {
 								<div className="w-8 text-center text-muted-foreground">~</div>
 								<div className="flex-1 px-2 text-muted-foreground">
 									{mode.toUpperCase()} MODE - {state.todos.length} todos{" "}
+									{mode === "visual" && `(${getVisualSelection().end - getVisualSelection().start + 1} selected) `}
 									{loading && "(loading...)"}
 								</div>
 							</div>

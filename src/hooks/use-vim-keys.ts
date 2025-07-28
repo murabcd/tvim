@@ -1,7 +1,7 @@
 import { useHotkeys } from "react-hotkeys-hook";
 
 interface UseVimKeysProps {
-	mode: "normal" | "insert" | "command";
+	mode: "normal" | "insert" | "command" | "visual";
 	onMoveUp: () => void;
 	onMoveDown: () => void;
 	onToggleTodo: () => void;
@@ -21,6 +21,11 @@ interface UseVimKeysProps {
 	onDeleteLine: () => void;
 	onYankTodo: () => void;
 	onPasteTodo: () => void;
+	onVisualMode: () => void;
+	onVisualMoveUp: () => void;
+	onVisualMoveDown: () => void;
+	onVisualToggle: () => void;
+	onVisualDelete: () => void;
 }
 
 export function useVimKeys({
@@ -44,6 +49,11 @@ export function useVimKeys({
 	onDeleteLine,
 	onYankTodo,
 	onPasteTodo,
+	onVisualMode,
+	onVisualMoveUp,
+	onVisualMoveDown,
+	onVisualToggle,
+	onVisualDelete,
 }: UseVimKeysProps) {
 	// === MODE SWITCHING ===
 	// Insert modes
@@ -73,7 +83,7 @@ export function useVimKeys({
 	}); // Append at end of line
 
 	// Command mode
-	useHotkeys("shift+;", onCommandMode, {
+	useHotkeys("shift+semicolon", onCommandMode, {
 		preventDefault: true,
 		enabled: mode === "normal",
 	}); // : command
@@ -143,10 +153,6 @@ export function useVimKeys({
 		preventDefault: true,
 		enabled: mode === "normal",
 	}); // dd - delete line
-	useHotkeys("d", onDeleteTodo, {
-		preventDefault: true,
-		enabled: mode === "normal",
-	}); // d - delete todo
 	useHotkeys("shift+d", onDeleteTodo, {
 		preventDefault: true,
 		enabled: mode === "normal",
@@ -185,13 +191,34 @@ export function useVimKeys({
 		enabled: mode === "normal",
 	}); // Ctrl+r - redo
 
-	// === SELECTION ===
-	useHotkeys("v", onSelectAll, {
+	// === VISUAL MODE ===
+	// Enter visual mode
+	useHotkeys("v", onVisualMode, {
 		preventDefault: true,
 		enabled: mode === "normal",
-	}); // v - visual mode (select all)
-	useHotkeys("shift+v", onSelectAll, {
+	});
+
+	// Visual mode navigation
+	useHotkeys("j", onVisualMoveDown, {
 		preventDefault: true,
-		enabled: mode === "normal",
-	}); // V - visual line mode
+		enabled: mode === "visual",
+	});
+	useHotkeys("k", onVisualMoveUp, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	});
+
+	// Visual mode operations
+	useHotkeys("x", onVisualToggle, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	});
+	useHotkeys("space", onVisualToggle, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	});
+	useHotkeys("d+d", onVisualDelete, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	});
 }
