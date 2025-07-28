@@ -121,7 +121,10 @@ export function TodoApp() {
 					{loading && state.todos.length === 0 ? (
 						<div className="divide-y divide-border">
 							{Array.from({ length: 3 }, (_, index) => (
-								<div key={`loading-skeleton-${index}`} className="flex items-center gap-3 p-3">
+								<div
+									key={`loading-skeleton-${index}`}
+									className="flex items-center gap-3 p-3"
+								>
 									<div className="w-8 text-right text-sm text-muted-foreground">
 										{index + 1}
 									</div>

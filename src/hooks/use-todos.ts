@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { nanoid } from "nanoid";
 
 import type { Todo, AppState } from "@/lib/schema";
 
@@ -32,9 +33,12 @@ export function useTodos() {
 	};
 
 	// Initialize todos from server-side data
-	const initializeTodos = useCallback((initialTodos: Todo[]) => {
-		queryClient.setQueryData(TODOS_QUERY_KEY, initialTodos);
-	}, [queryClient]);
+	const initializeTodos = useCallback(
+		(initialTodos: Todo[]) => {
+			queryClient.setQueryData(TODOS_QUERY_KEY, initialTodos);
+		},
+		[queryClient],
+	);
 
 	const saveToHistory = useCallback(
 		(todosToSave: Todo[]) => {
@@ -53,13 +57,14 @@ export function useTodos() {
 		mutationFn: createTodo,
 		onMutate: async ({ data: text }) => {
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
-			
+			const previousTodos =
+				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+
 			saveToHistory(previousTodos);
-			
+
 			// Create temporary todo for optimistic update
 			const tempTodo: Todo = {
-				id: -Date.now(),
+				id: `temp-${nanoid()}`,
 				text,
 				completed: false,
 				created: new Date(),
@@ -69,9 +74,10 @@ export function useTodos() {
 		},
 		onSuccess: (newTodo, _, context) => {
 			if (context) {
-				const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
-				const updatedTodos = previousTodos.map(todo => 
-					todo.id === context.tempTodo.id ? newTodo : todo
+				const previousTodos =
+					queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+				const updatedTodos = previousTodos.map((todo) =>
+					todo.id === context.tempTodo.id ? newTodo : todo,
 				);
 				queryClient.setQueryData(TODOS_QUERY_KEY, updatedTodos);
 			}
@@ -88,16 +94,15 @@ export function useTodos() {
 		mutationFn: updateTodo,
 		onMutate: async ({ data: updateData }) => {
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
-			
+			const previousTodos =
+				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+
 			saveToHistory(previousTodos);
-			
-			const optimisticTodos = previousTodos.map(todo =>
-				todo.id === updateData.id 
-					? { ...todo, ...updateData }
-					: todo
+
+			const optimisticTodos = previousTodos.map((todo) =>
+				todo.id === updateData.id ? { ...todo, ...updateData } : todo,
 			);
-			
+
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
 			return { previousTodos };
 		},
@@ -116,13 +121,16 @@ export function useTodos() {
 		mutationFn: deleteTodo,
 		onMutate: async ({ data: todoId }) => {
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
-			
+			const previousTodos =
+				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+
 			saveToHistory(previousTodos);
-			
-			const optimisticTodos = previousTodos.filter(todo => todo.id !== todoId);
+
+			const optimisticTodos = previousTodos.filter(
+				(todo) => todo.id !== todoId,
+			);
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-			
+
 			return { previousTodos };
 		},
 		onError: (_, __, context) => {
@@ -137,11 +145,12 @@ export function useTodos() {
 		mutationFn: clearAllTodos,
 		onMutate: async () => {
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
-			const previousTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
-			
+			const previousTodos =
+				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+
 			saveToHistory(previousTodos);
 			queryClient.setQueryData(TODOS_QUERY_KEY, []);
-			
+
 			return { previousTodos };
 		},
 		onError: (_, __, context) => {
@@ -153,11 +162,12 @@ export function useTodos() {
 
 	const addTodo = useCallback(
 		async (text: string, position?: "below" | "above") => {
-			const currentTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
-			
+			const currentTodos =
+				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+
 			// Create temporary todo for optimistic update
 			const tempTodo: Todo = {
-				id: -Date.now(),
+				id: `temp-${nanoid()}`,
 				text,
 				completed: false,
 				created: new Date(),
@@ -187,7 +197,7 @@ export function useTodos() {
 
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
 			setSelectedIndex(newSelectedIndex);
-			
+
 			createTodoMutation.mutate({ data: text });
 		},
 		[createTodoMutation, queryClient, selectedIndex],
@@ -210,20 +220,24 @@ export function useTodos() {
 			if (!todo) return;
 
 			updateTodoMutation.mutate({
-				data: { id: todo.id, completed: !todo.completed }
+				data: { id: todo.id, completed: !todo.completed },
 			});
 		},
 		[updateTodoMutation, todos],
 	);
 
-	const moveSelection = useCallback((direction: "up" | "down") => {
-		setSelectedIndex(prev => {
-			const newIndex = direction === "up"
-				? Math.max(0, prev - 1)
-				: Math.min(todos.length - 1, prev + 1);
-			return newIndex;
-		});
-	}, [todos.length]);
+	const moveSelection = useCallback(
+		(direction: "up" | "down") => {
+			setSelectedIndex((prev) => {
+				const newIndex =
+					direction === "up"
+						? Math.max(0, prev - 1)
+						: Math.min(todos.length - 1, prev + 1);
+				return newIndex;
+			});
+		},
+		[todos.length],
+	);
 
 	const goToTop = useCallback(() => {
 		setSelectedIndex(0);
@@ -254,9 +268,10 @@ export function useTodos() {
 	const pasteTodo = useCallback(async () => {
 		if (!clipboardRef.current) return;
 
-		const currentTodos = queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+		const currentTodos =
+			queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
 		const tempTodo: Todo = {
-			id: -Date.now(),
+			id: -Math.floor(Math.random() * 1000000),
 			text: clipboardRef.current.text,
 			completed: false,
 			created: new Date(),
@@ -276,7 +291,7 @@ export function useTodos() {
 		if (historyIndex > 0) {
 			const previousState = history[historyIndex - 1];
 			queryClient.setQueryData(TODOS_QUERY_KEY, [...previousState]);
-			setHistoryIndex(prev => prev - 1);
+			setHistoryIndex((prev) => prev - 1);
 		}
 	}, [history, historyIndex, queryClient]);
 
@@ -284,38 +299,43 @@ export function useTodos() {
 		if (historyIndex < history.length - 1) {
 			const nextState = history[historyIndex + 1];
 			queryClient.setQueryData(TODOS_QUERY_KEY, [...nextState]);
-			setHistoryIndex(prev => prev + 1);
+			setHistoryIndex((prev) => prev + 1);
 		}
 	}, [history, historyIndex, queryClient]);
 
 	const selectAll = useCallback(async () => {
 		if (todos.length === 0) return;
 
-		const allCompleted = todos.every(todo => todo.completed);
-		
+		const allCompleted = todos.every((todo) => todo.completed);
+
 		// Optimistically update all todos
-		const optimisticTodos = todos.map(todo => ({
+		const optimisticTodos = todos.map((todo) => ({
 			...todo,
 			completed: !allCompleted,
 		}));
-		
+
 		queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-		
+
 		// Update all todos in the database
 		Promise.all(
-			todos.map(todo =>
+			todos.map((todo) =>
 				updateTodoMutation.mutateAsync({
-					data: { id: todo.id, completed: !allCompleted }
-				})
-			)
-		).catch(error => {
+					data: { id: todo.id, completed: !allCompleted },
+				}),
+			),
+		).catch((error) => {
 			console.error("Failed to toggle all todos:", error);
 		});
 	}, [todos, queryClient, updateTodoMutation]);
 
 	return {
 		state,
-		loading: isLoading || createTodoMutation.isPending || updateTodoMutation.isPending || deleteTodoMutation.isPending || clearTodosMutation.isPending,
+		loading:
+			isLoading ||
+			createTodoMutation.isPending ||
+			updateTodoMutation.isPending ||
+			deleteTodoMutation.isPending ||
+			clearTodosMutation.isPending,
 		initializeTodos,
 		addTodo,
 		deleteTodo: deleteTodoById,

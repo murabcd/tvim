@@ -1,7 +1,7 @@
-import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, timestamp } from "drizzle-orm/pg-core";
 
 export const todos = pgTable("todos", {
-	id: serial("id").primaryKey(),
+	id: text("id").primaryKey(),
 	text: text("text").notNull(),
 	completed: boolean("completed").default(false).notNull(),
 	created: timestamp("created").defaultNow().notNull(),
@@ -9,7 +9,7 @@ export const todos = pgTable("todos", {
 });
 
 export interface Todo {
-	id: number;
+	id: string;
 	text: string;
 	completed: boolean;
 	created: Date;

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { nanoid } from "nanoid";
 
 import { eq, desc } from "drizzle-orm";
 
@@ -22,6 +23,7 @@ export const createTodo = createServerFn()
 		const [newTodo] = await db
 			.insert(todos)
 			.values({
+				id: nanoid(),
 				text: text.trim(),
 				completed: false,
 			})
@@ -36,7 +38,7 @@ export const createTodo = createServerFn()
 	});
 
 export const updateTodo = createServerFn()
-	.validator((data: { id: number; completed: boolean }) => data)
+	.validator((data: { id: string; completed: boolean }) => data)
 	.handler(async ({ data }) => {
 		await db
 			.update(todos)
@@ -48,7 +50,7 @@ export const updateTodo = createServerFn()
 	});
 
 export const deleteTodo = createServerFn()
-	.validator((id: number) => id)
+	.validator((id: string) => id)
 	.handler(async ({ data: id }) => {
 		await db.delete(todos).where(eq(todos.id, id));
 	});

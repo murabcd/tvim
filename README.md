@@ -30,7 +30,7 @@
 
 You can deploy your own version of TVIM to Vercel with one click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmurabcd%2Ftvim&env=DATABASE_URL&envDescription=Learn%20more%20about%20how%20to%20get%20the%20database%20URL%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Fmurabcd%2Ftvim%2Fblob%2Fmain%2FREADME.md&demo-title=TVIM&demo-description=Modern%20To%20Do%20List%20with%20Vim%20Commands%20built%20with%20Tanstack%20Start%2C%20Supabase%2C%20and%20Drizzle.&demo-url=https%3A%2F%2Ftvim.vercel.app
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmurabcd%2Ftvim&env=DATABASE_URL&envDescription=Learn%20more%20about%20how%20to%20get%20the%20database%20URL%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Fmurabcd%2Ftvim%2Fblob%2Fmain%2FREADME.md&demo-title=TVIM&demo-description=Modern%20To%20Do%20List%20with%20Vim%20Commands%20built%20with%20Tanstack%20Start%2C%20Supabase%2C%20and%20Drizzle.&demo-url=https%3A%2F%2Ftvim.vercel.app)
 
 ## Running locally
 
