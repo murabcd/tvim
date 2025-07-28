@@ -1,0 +1,156 @@
+import { useTodos } from "@/hooks/use-todos";
+import { useVimKeys } from "@/hooks/use-vim-keys";
+import { TodoList } from "./todo-list";
+import { Input } from "./ui/input";
+import { useState } from "react";
+
+export function TodoApp() {
+	const [mode, setMode] = useState<"normal" | "insert" | "command">("normal");
+	const [inputValue, setInputValue] = useState("");
+	const [commandValue, setCommandValue] = useState("");
+
+	const {
+		state,
+		moveSelection,
+		toggleTodo,
+		deleteTodo,
+		addTodo,
+		goToTop,
+		goToBottom,
+		saveTodos,
+		loadTodos,
+		clearTodos,
+		yankTodo,
+		pasteTodo,
+		undo,
+		redo,
+		selectAll,
+	} = useTodos();
+
+	const handleSubmitTodo = (position?: "below" | "above") => {
+		if (inputValue.trim()) {
+			addTodo(inputValue, position);
+			setInputValue("");
+			setMode("normal");
+		}
+	};
+
+	const handleCommand = () => {
+		if (commandValue.startsWith("add ")) {
+			const text = commandValue.slice(4).trim();
+			if (text) {
+				addTodo(text);
+			}
+		}
+		setCommandValue("");
+		setMode("normal");
+	};
+
+	useVimKeys({
+		mode,
+		onMoveUp: () => moveSelection("up"),
+		onMoveDown: () => moveSelection("down"),
+		onToggleTodo: () => toggleTodo(state.selectedIndex),
+		onDeleteTodo: () => deleteTodo(state.selectedIndex),
+		onGoToTop: goToTop,
+		onGoToBottom: goToBottom,
+		onInsertMode: () => setMode("insert"),
+		onInsertModeBelow: () => setMode("insert"),
+		onInsertModeAbove: () => setMode("insert"),
+		onAppendMode: () => setMode("insert"),
+		onAppendModeEnd: () => setMode("insert"),
+		onCommandMode: () => setMode("command"),
+		onEscape: () => setMode("normal"),
+		onUndo: undo,
+		onRedo: redo,
+		onSelectAll: selectAll,
+		onDeleteLine: () => deleteTodo(state.selectedIndex),
+		onYankTodo: yankTodo,
+		onPasteTodo: pasteTodo,
+	});
+
+	return (
+		<div className="min-h-screen bg-background text-foreground font-mono">
+			<div className="container mx-auto p-4 max-w-4xl">
+				<div className="mb-10">
+					<h1 className="text-2xl font-bold mb-2">TVIM</h1>
+					<div className="text-xs text-muted-foreground space-y-1">
+						<p>
+							<strong>Navigation:</strong> j/k/h/l (move) | gg/G (top/bottom) |
+							←/→ (arrow keys)
+						</p>
+						<p>
+							<strong>Insert:</strong> i/I (insert) | o/O (new line) | a/A
+							(append) | ESC/Ctrl+C (exit)
+						</p>
+						<p>
+							<strong>Edit:</strong> x/Space (toggle) | d/dd/D (delete) | u
+							(undo) | Ctrl+R (redo)
+						</p>
+						<p>
+							<strong>Copy/Paste:</strong> y/yy (yank) | p/P (paste) | v/V
+							(select all/toggle)
+						</p>
+						<p>
+							<strong>Command:</strong> : (command mode) | :add &lt;text&gt;
+							(add todo)
+						</p>
+					</div>
+				</div>
+
+				<div className="border border-border rounded-lg overflow-hidden">
+					<TodoList todos={state.todos} selectedIndex={state.selectedIndex} />
+
+					<div className="border-t border-border bg-muted/30">
+						{mode === "insert" ? (
+							<div className="flex items-center p-2">
+								<div className="w-8 text-center text-muted-foreground">~</div>
+								<Input
+									value={inputValue}
+									onChange={(e) => setInputValue(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											handleSubmitTodo();
+										} else if (e.key === "Escape") {
+											setMode("normal");
+											setInputValue("");
+										}
+									}}
+									placeholder="Enter new todo..."
+									className="flex-1 mx-2 bg-transparent border-none focus:ring-0 text-foreground"
+									autoFocus
+								/>
+							</div>
+						) : mode === "command" ? (
+							<div className="flex items-center p-2">
+								<div className="w-8 text-center text-muted-foreground">:</div>
+								<Input
+									value={commandValue}
+									onChange={(e) => setCommandValue(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											handleCommand();
+										} else if (e.key === "Escape") {
+											setMode("normal");
+											setCommandValue("");
+										}
+									}}
+									placeholder="add <text>"
+									className="flex-1 mx-2 bg-transparent border-none focus:ring-0 text-foreground"
+									autoFocus
+								/>
+							</div>
+						) : (
+							<div className="flex items-center p-2">
+								<div className="w-8 text-center text-muted-foreground">~</div>
+								<div className="flex-1 px-2 text-muted-foreground">
+									{mode.toUpperCase()} MODE - {state.todos.length} todos
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

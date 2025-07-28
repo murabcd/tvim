@@ -1,0 +1,52 @@
+import type { Todo } from '@/types';
+import { Check, Circle } from 'lucide-react';
+
+interface TodoListProps {
+  todos: Todo[];
+  selectedIndex: number;
+}
+
+export function TodoList({ todos, selectedIndex }: TodoListProps) {
+  if (todos.length === 0) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p>No todos yet. Use ":add &lt;text&gt;" to create your first todo.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-border">
+      {todos.map((todo, index) => (
+        <div
+          key={todo.id}
+          className={`flex items-center gap-3 p-3 ${
+            index === selectedIndex 
+              ? 'bg-accent text-accent-foreground' 
+              : 'hover:bg-muted/50'
+          }`}
+        >
+          <div className="w-8 text-right text-sm text-muted-foreground">
+            {index + 1}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {todo.completed ? (
+              <Check className="w-4 h-4 text-green-500" />
+            ) : (
+              <Circle className="w-4 h-4 text-muted-foreground" />
+            )}
+          </div>
+          
+          <div className={`flex-1 ${todo.completed ? 'line-through text-muted-foreground' : ''}`}>
+            {todo.text}
+          </div>
+          
+          <div className="text-xs text-muted-foreground">
+            {todo.created.toLocaleDateString()}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
