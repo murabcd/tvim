@@ -8,6 +8,7 @@ import type { Todo } from "@/lib/schema";
 
 import { Input } from "@/components/ui/input";
 import { TodoList } from "@/components/todo-list";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RouteContext {
 	todos: Todo[];
@@ -117,7 +118,22 @@ export function TodoApp() {
 				</div>
 
 				<div className="border border-border rounded-lg overflow-hidden">
-					<TodoList todos={state.todos} selectedIndex={state.selectedIndex} />
+					{loading && state.todos.length === 0 ? (
+						<div className="divide-y divide-border">
+							{Array.from({ length: 3 }, (_, index) => (
+								<div key={`loading-skeleton-${index}`} className="flex items-center gap-3 p-3">
+									<div className="w-8 text-right text-sm text-muted-foreground">
+										{index + 1}
+									</div>
+									<Skeleton className="w-4 h-4 rounded-full" />
+									<Skeleton className="flex-1 h-4" />
+									<Skeleton className="w-16 h-3" />
+								</div>
+							))}
+						</div>
+					) : (
+						<TodoList todos={state.todos} selectedIndex={state.selectedIndex} />
+					)}
 
 					<div className="border-t border-border bg-muted/30">
 						{mode === "insert" ? (
