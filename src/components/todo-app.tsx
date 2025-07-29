@@ -202,6 +202,12 @@ export function TodoApp() {
 		}
 	};
 
+	const handleSortNewest = () => setSortType("date-newest");
+	const handleSortOldest = () => setSortType("date-oldest");
+	const handleToggleSort = () => {
+		setSortType(sortType === "date-newest" ? "date-oldest" : "date-newest");
+	};
+
 	useVimKeys({
 		mode,
 		onMoveUp: () => moveSelection("up"),
@@ -237,6 +243,9 @@ export function TodoApp() {
 		onVisualToggle: handleVisualToggle,
 		onVisualDelete: handleVisualDelete,
 		onHelp: () => setHelpOpen(true),
+		onSortNewest: handleSortNewest,
+		onSortOldest: handleSortOldest,
+		onToggleSort: handleToggleSort,
 	});
 
 	return (
@@ -303,10 +312,20 @@ export function TodoApp() {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
 								<DropdownMenuItem onClick={() => setSortType("date-newest")}>
-									Date: Newest first
+									<div className="flex items-center justify-between w-full">
+										<span>Date: Newest first</span>
+										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
+											1
+										</kbd>
+									</div>
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => setSortType("date-oldest")}>
-									Date: Oldest first
+									<div className="flex items-center justify-between w-full">
+										<span>Date: Oldest first</span>
+										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
+											2
+										</kbd>
+									</div>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
