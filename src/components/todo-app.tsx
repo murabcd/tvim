@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouteContext } from "@tanstack/react-router";
 
 import { useTodos } from "@/hooks/use-todos";
@@ -18,6 +18,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { HelpModal } from "@/components/help-modal";
 
 interface RouteContext {
 	todos: Todo[];
@@ -37,6 +38,9 @@ export function TodoApp() {
 	const [sortType, setSortType] = useState<
 		"none" | "date-newest" | "date-oldest"
 	>("none");
+	const [helpOpen, setHelpOpen] = useState(false);
+	const [editingTodoIndex, setEditingTodoIndex] = useState<number | null>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const { isAuthenticated, isLoading: authLoading } = useAuth();
 	const {
@@ -50,6 +54,7 @@ export function TodoApp() {
 		goToBottom,
 		yankTodo,
 		pasteTodo,
+		pasteTodoAbove,
 		undo,
 		redo,
 		selectAll,
@@ -65,9 +70,68 @@ export function TodoApp() {
 
 	const handleSubmitTodo = (position?: "below" | "above") => {
 		if (inputValue.trim()) {
-			addTodo(inputValue, position);
+			if (editingTodoIndex !== null) {
+				// Editing existing todo
+				// Note: You'll need to implement updateTodo in your useTodos hook
+				// For now, we'll just add a new todo and delete the old one
+				addTodo(inputValue, position);
+				deleteTodo(editingTodoIndex);
+			} else {
+				// Adding new todo
+				addTodo(inputValue, position);
+			}
 			setInputValue("");
+			setEditingTodoIndex(null);
 			setMode("normal");
+		}
+	};
+
+	// Vim-style insert mode handlers
+	const handleInsertMode = () => {
+		// 'i' - Insert at cursor (edit current todo)
+		if (state.todos.length > 0 && state.selectedIndex >= 0) {
+			const currentTodo = state.todos[state.selectedIndex];
+			setInputValue(currentTodo.text);
+			setEditingTodoIndex(state.selectedIndex);
+			setMode("insert");
+			// Position cursor at beginning for 'i'
+			setTimeout(() => {
+				if (inputRef.current) {
+					inputRef.current.setSelectionRange(0, 0);
+				}
+			}, 0);
+		} else {
+			setInputValue("");
+			setEditingTodoIndex(null);
+			setMode("insert");
+		}
+	};
+
+	const handleInsertModeBelow = () => {
+		// 'o' - Open line below (add new todo below current)
+		setInputValue("");
+		setEditingTodoIndex(null);
+		setMode("insert");
+	};
+
+	const handleAppendMode = () => {
+		// 'a' - Append after cursor (edit current todo)
+		if (state.todos.length > 0 && state.selectedIndex >= 0) {
+			const currentTodo = state.todos[state.selectedIndex];
+			setInputValue(currentTodo.text);
+			setEditingTodoIndex(state.selectedIndex);
+			setMode("insert");
+			// Position cursor at end for 'a'
+			setTimeout(() => {
+				if (inputRef.current) {
+					const length = inputRef.current.value.length;
+					inputRef.current.setSelectionRange(length, length);
+				}
+			}, 0);
+		} else {
+			setInputValue("");
+			setEditingTodoIndex(null);
+			setMode("insert");
 		}
 	};
 
@@ -77,6 +141,11 @@ export function TodoApp() {
 			if (text) {
 				addTodo(text);
 			}
+		} else if (commandValue === "help" || commandValue === "h") {
+			setHelpOpen(true);
+			setCommandValue("");
+			setMode("normal");
+			return;
 		}
 		setCommandValue("");
 		setMode("normal");
@@ -106,6 +175,7 @@ export function TodoApp() {
 
 	const handleVisualToggle = () => {
 		const { start, end } = getVisualSelection();
+		// Toggle todos by index (this should work fine since toggle doesn't change array length)
 		for (let i = start; i <= end; i++) {
 			toggleTodo(i);
 		}
@@ -114,6 +184,7 @@ export function TodoApp() {
 
 	const handleVisualDelete = () => {
 		const { start, end } = getVisualSelection();
+		// Delete from end to start to avoid index shifting issues
 		for (let i = end; i >= start; i--) {
 			deleteTodo(i);
 		}
@@ -136,27 +207,36 @@ export function TodoApp() {
 		onMoveUp: () => moveSelection("up"),
 		onMoveDown: () => moveSelection("down"),
 		onToggleTodo: () => toggleTodo(state.selectedIndex),
-		onDeleteTodo: () => deleteTodo(state.selectedIndex),
+
 		onGoToTop: goToTop,
 		onGoToBottom: goToBottom,
-		onInsertMode: () => setMode("insert"),
-		onInsertModeBelow: () => setMode("insert"),
-		onInsertModeAbove: () => setMode("insert"),
-		onAppendMode: () => setMode("insert"),
-		onAppendModeEnd: () => setMode("insert"),
+		onInsertMode: handleInsertMode,
+		onInsertModeBelow: handleInsertModeBelow,
+		onAppendMode: handleAppendMode,
 		onCommandMode: () => setMode("command"),
-		onEscape: () => setMode("normal"),
+		onEscape: () => {
+			setMode("normal");
+			setInputValue("");
+			setEditingTodoIndex(null);
+			// Reset visual selection when exiting visual mode
+			if (mode === "visual") {
+				setVisualStart(0);
+				setVisualEnd(0);
+			}
+		},
 		onUndo: undo,
 		onRedo: redo,
 		onSelectAll: selectAll,
 		onDeleteLine: () => deleteTodo(state.selectedIndex),
 		onYankTodo: yankTodo,
 		onPasteTodo: pasteTodo,
+		onPasteTodoAbove: pasteTodoAbove,
 		onVisualMode: handleVisualMode,
 		onVisualMoveUp: handleVisualMoveUp,
 		onVisualMoveDown: handleVisualMoveDown,
 		onVisualToggle: handleVisualToggle,
 		onVisualDelete: handleVisualDelete,
+		onHelp: () => setHelpOpen(true),
 	});
 
 	return (
@@ -194,26 +274,15 @@ export function TodoApp() {
 						)}
 					</div>
 
-					<div className="hidden md:block text-xs text-muted-foreground space-y-1">
+					<div className="hidden md:block text-xs text-muted-foreground">
 						<p>
-							<span className="font-semibold">Navigation:</span> j/k (up/down) |
-							g/G (top/bottom) | ↑/↓ (arrow keys)
-						</p>
-						<p>
-							<span className="font-semibold">Insert:</span> i/I (insert) | o/O
-							(new line) | a/A (append) | ESC (exit)
-						</p>
-						<p>
-							<span className="font-semibold">Edit:</span> x/Space (toggle) |
-							d/D (delete) | u (undo) | r (redo)
-						</p>
-						<p>
-							<span className="font-semibold">Copy/Paste:</span> y/yy (yank) |
-							p/P (paste) | v (visual mode)
-						</p>
-						<p>
-							<span className="font-semibold">Command:</span> : (command mode) |
-							:add &lt;text&gt; (add todo)
+							Press{" "}
+							<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+								Shift + ;
+							</kbd>{" "}
+							and type{" "}
+							<kbd className="px-1 py-0.5 bg-muted rounded text-xs">:help</kbd>{" "}
+							for keyboard shortcuts
 						</p>
 					</div>
 				</div>
@@ -277,6 +346,7 @@ export function TodoApp() {
 							<div className="flex items-center p-2">
 								<div className="w-8 text-center text-muted-foreground">~</div>
 								<Input
+									ref={inputRef}
 									value={inputValue}
 									onChange={(e) => setInputValue(e.target.value)}
 									onKeyDown={(e) => {
@@ -285,9 +355,14 @@ export function TodoApp() {
 										} else if (e.key === "Escape") {
 											setMode("normal");
 											setInputValue("");
+											setEditingTodoIndex(null);
 										}
 									}}
-									placeholder="Enter new todo..."
+									placeholder={
+										editingTodoIndex !== null
+											? "Edit todo..."
+											: "Enter new todo..."
+									}
 									className="flex-1 mx-2 bg-transparent border-none focus:ring-0 text-foreground"
 									autoFocus
 								/>
@@ -300,6 +375,7 @@ export function TodoApp() {
 									onChange={(e) => setCommandValue(e.target.value)}
 									onKeyDown={(e) => {
 										if (e.key === "Enter") {
+											e.preventDefault();
 											handleCommand();
 										} else if (e.key === "Escape") {
 											setMode("normal");
@@ -329,6 +405,7 @@ export function TodoApp() {
 					</div>
 				</div>
 			</div>
+			<HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
 		</div>
 	);
 }

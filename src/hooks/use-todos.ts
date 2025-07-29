@@ -447,6 +447,41 @@ export function useTodos() {
 		setLocalTodos,
 	]);
 
+	const pasteTodoAbove = useCallback(async () => {
+		if (!clipboardRef.current) return;
+
+		const currentTodos = isAuthenticated
+			? queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || []
+			: localTodos;
+
+		const tempTodo: Todo = {
+			id: `temp-${nanoid()}`,
+			text: clipboardRef.current.text,
+			completed: false,
+			created: new Date(),
+		};
+
+		const optimisticTodos = [
+			...currentTodos.slice(0, selectedIndex),
+			tempTodo,
+			...currentTodos.slice(selectedIndex),
+		];
+
+		if (isAuthenticated) {
+			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
+			createTodoMutation.mutate({ data: clipboardRef.current.text });
+		} else {
+			setLocalTodos(optimisticTodos);
+		}
+	}, [
+		createTodoMutation,
+		queryClient,
+		selectedIndex,
+		isAuthenticated,
+		localTodos,
+		setLocalTodos,
+	]);
+
 	const undo = useCallback(() => {
 		if (historyIndex > 0) {
 			const previousState = history[historyIndex - 1];
@@ -531,6 +566,7 @@ export function useTodos() {
 		clearTodos,
 		yankTodo,
 		pasteTodo,
+		pasteTodoAbove,
 		undo,
 		redo,
 		selectAll,

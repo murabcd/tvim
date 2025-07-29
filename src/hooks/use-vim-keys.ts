@@ -5,14 +5,11 @@ interface UseVimKeysProps {
 	onMoveUp: () => void;
 	onMoveDown: () => void;
 	onToggleTodo: () => void;
-	onDeleteTodo: () => void;
 	onGoToTop: () => void;
 	onGoToBottom: () => void;
 	onInsertMode: () => void;
 	onInsertModeBelow: () => void;
-	onInsertModeAbove: () => void;
 	onAppendMode: () => void;
-	onAppendModeEnd: () => void;
 	onCommandMode: () => void;
 	onEscape: () => void;
 	onUndo: () => void;
@@ -21,11 +18,13 @@ interface UseVimKeysProps {
 	onDeleteLine: () => void;
 	onYankTodo: () => void;
 	onPasteTodo: () => void;
+	onPasteTodoAbove: () => void;
 	onVisualMode: () => void;
 	onVisualMoveUp: () => void;
 	onVisualMoveDown: () => void;
 	onVisualToggle: () => void;
 	onVisualDelete: () => void;
+	onHelp: () => void;
 }
 
 export function useVimKeys({
@@ -33,14 +32,11 @@ export function useVimKeys({
 	onMoveUp,
 	onMoveDown,
 	onToggleTodo,
-	onDeleteTodo,
 	onGoToTop,
 	onGoToBottom,
 	onInsertMode,
 	onInsertModeBelow,
-	onInsertModeAbove,
 	onAppendMode,
-	onAppendModeEnd,
 	onCommandMode,
 	onEscape,
 	onUndo,
@@ -49,38 +45,28 @@ export function useVimKeys({
 	onDeleteLine,
 	onYankTodo,
 	onPasteTodo,
+	onPasteTodoAbove,
 	onVisualMode,
 	onVisualMoveUp,
 	onVisualMoveDown,
 	onVisualToggle,
 	onVisualDelete,
+	onHelp,
 }: UseVimKeysProps) {
 	// === MODE SWITCHING ===
 	// Insert modes
 	useHotkeys("i", onInsertMode, {
 		preventDefault: true,
 		enabled: mode === "normal",
-	});
-	useHotkeys("shift+i", onInsertMode, {
-		preventDefault: true,
-		enabled: mode === "normal",
-	}); // Insert at beginning
+	}); // Insert at cursor
 	useHotkeys("o", onInsertModeBelow, {
 		preventDefault: true,
 		enabled: mode === "normal",
-	}); // Open line below
-	useHotkeys("shift+o", onInsertModeAbove, {
-		preventDefault: true,
-		enabled: mode === "normal",
-	}); // Open line above
+	}); // Open line below (add new todo)
 	useHotkeys("a", onAppendMode, {
 		preventDefault: true,
 		enabled: mode === "normal",
-	}); // Append after cursor
-	useHotkeys("shift+a", onAppendModeEnd, {
-		preventDefault: true,
-		enabled: mode === "normal",
-	}); // Append at end of line
+	}); // Append at end
 
 	// Command mode
 	useHotkeys("shift+semicolon", onCommandMode, {
@@ -128,10 +114,10 @@ export function useVimKeys({
 	});
 
 	// Jump navigation
-	useHotkeys("g+g", onGoToTop, {
+	useHotkeys("g", onGoToTop, {
 		preventDefault: true,
 		enabled: mode === "normal",
-	}); // gg - go to top
+	}); // g - go to top (simplified)
 	useHotkeys("shift+g", onGoToBottom, {
 		preventDefault: true,
 		enabled: mode === "normal",
@@ -149,28 +135,20 @@ export function useVimKeys({
 	}); // x - toggle (vim style)
 
 	// Delete operations
-	useHotkeys("d+d", onDeleteLine, {
+	useHotkeys("d", onDeleteLine, {
 		preventDefault: true,
 		enabled: mode === "normal",
-	}); // dd - delete line
-	useHotkeys("shift+d", onDeleteTodo, {
-		preventDefault: true,
-		enabled: mode === "normal",
-	}); // D - delete to end
-	useHotkeys("Delete", onDeleteTodo, {
+	}); // d - delete line
+	useHotkeys("Delete", onDeleteLine, {
 		preventDefault: true,
 		enabled: mode === "normal",
 	});
-	useHotkeys("Backspace", onDeleteTodo, {
+	useHotkeys("Backspace", onDeleteLine, {
 		preventDefault: true,
 		enabled: mode === "normal",
 	});
 
 	// Copy/Paste operations
-	useHotkeys("y+y", onYankTodo, {
-		preventDefault: true,
-		enabled: mode === "normal",
-	}); // yy - yank line
 	useHotkeys("y", onYankTodo, {
 		preventDefault: true,
 		enabled: mode === "normal",
@@ -179,7 +157,7 @@ export function useVimKeys({
 		preventDefault: true,
 		enabled: mode === "normal",
 	}); // p - paste below
-	useHotkeys("shift+p", onPasteTodo, {
+	useHotkeys("shift+p", onPasteTodoAbove, {
 		preventDefault: true,
 		enabled: mode === "normal",
 	}); // P - paste above
@@ -217,8 +195,18 @@ export function useVimKeys({
 		preventDefault: true,
 		enabled: mode === "visual",
 	});
-	useHotkeys("d+d", onVisualDelete, {
+	useHotkeys("d", onVisualDelete, {
 		preventDefault: true,
 		enabled: mode === "visual",
 	});
+
+	// === HELP ===
+	useHotkeys("F1", onHelp, {
+		preventDefault: true,
+		enabled: mode === "normal",
+	}); // F1 - help
+	useHotkeys("shift+slash", onHelp, {
+		preventDefault: true,
+		enabled: mode === "normal",
+	}); // ? - help (vim style)
 }

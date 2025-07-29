@@ -31,7 +31,19 @@ export function TodoList({
 
 	const isVisuallySelected = (index: number): boolean => {
 		if (!visualSelection) return false;
-		return index >= visualSelection.start && index <= visualSelection.end;
+
+		// If no sorting, use direct index comparison
+		if (sortType === "none") {
+			return index >= visualSelection.start && index <= visualSelection.end;
+		}
+
+		// For sorted lists, we need to map the visual selection to the sorted indices
+		const todo = sortedTodos[index];
+		const originalIndex = todos.findIndex((t) => t.id === todo.id);
+		return (
+			originalIndex >= visualSelection.start &&
+			originalIndex <= visualSelection.end
+		);
 	};
 
 	// Sort todos based on sortType
