@@ -27,7 +27,7 @@ export function TodoApp() {
 	const [visualStart, setVisualStart] = useState<number>(0);
 	const [visualEnd, setVisualEnd] = useState<number>(0);
 
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, isLoading: authLoading } = useAuth();
 	const {
 		state,
 		loading,
@@ -141,27 +141,35 @@ export function TodoApp() {
 		<div className="min-h-screen bg-background text-foreground">
 			<div className="container mx-auto p-4 max-w-4xl">
 				<div className="mb-10">
-					<h1 className="text-2xl font-bold mb-2">TVIM</h1>
-
 					{/* Authentication Status */}
 					<div className="mb-4 p-3 rounded-lg border border-border bg-muted/30">
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<div
-									className={`w-2 h-2 rounded-full ${isAuthenticated ? "bg-green-500" : "bg-yellow-500"}`}
-								></div>
-								<span className="text-sm font-medium">
+						{authLoading ? (
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<Skeleton className="w-2 h-2 rounded-full" />
+									<Skeleton className="h-4 w-40" />
+								</div>
+								<Skeleton className="h-3 w-48" />
+							</div>
+						) : (
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<div
+										className={`w-2 h-2 rounded-full ${isAuthenticated ? "bg-green-500" : "bg-yellow-500"}`}
+									></div>
+									<span className="text-sm font-medium">
+										{isAuthenticated
+											? "Connected to database"
+											: "Local storage mode"}
+									</span>
+								</div>
+								<div className="text-xs text-muted-foreground">
 									{isAuthenticated
-										? "Connected to database"
-										: "Local storage mode"}
-								</span>
+										? "Todos are saved to your account."
+										: "Todos are saved locally. Login to sync to database."}
+								</div>
 							</div>
-							<div className="text-xs text-muted-foreground">
-								{isAuthenticated
-									? "Todos are saved to your account."
-									: "Todos are saved locally. Login to sync to database."}
-							</div>
-						</div>
+						)}
 					</div>
 
 					<div className="text-xs text-muted-foreground space-y-1">
@@ -258,10 +266,13 @@ export function TodoApp() {
 							<div className="flex items-center p-2">
 								<div className="w-8 text-center text-muted-foreground">~</div>
 								<div className="flex-1 px-2 text-muted-foreground">
-									{mode.toUpperCase()} MODE - {state.todos.length} todos{" "}
+									{loading ? (
+										<Skeleton className="inline-block w-32 h-3" />
+									) : (
+										`${mode.toUpperCase()} MODE - ${state.todos.length} todos`
+									)}{" "}
 									{mode === "visual" &&
 										`(${getVisualSelection().end - getVisualSelection().start + 1} selected) `}
-									{loading && "(loading...)"}
 									{!isAuthenticated && state.todos.length > 0 && " (local)"}
 								</div>
 							</div>

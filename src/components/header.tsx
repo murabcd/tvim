@@ -4,34 +4,34 @@ import { useAuth } from "@/hooks/use-auth";
 
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UserNav } from "@/components/user-nav";
 
 export function Header() {
-	const { user, isAuthenticated, isLoading, signOut } = useAuth();
+	const { user, isAuthenticated, isLoading } = useAuth();
 
 	return (
 		<header className="sticky top-0 z-50 bg-background border-b border-border px-4 py-3">
 			<div className="max-w-7xl mx-auto flex items-center justify-between">
-				<Link to="/" className="text-xl font-bold text-foreground">
+				<Link
+					to="/"
+					className="flex items-center gap-2 text-xl font-bold text-foreground"
+				>
 					<Icons.tvim className="w-6 h-6" />
+					<span>TVIM</span>
+					<span className="text-muted-foreground text-base font-normal ml-2">
+						Vim Mode To-Do List
+					</span>
 				</Link>
 
 				<div className="flex items-center gap-4">
 					{isLoading ? (
-						<div className="text-sm text-muted-foreground">Loading...</div>
-					) : isAuthenticated && user ? (
 						<div className="flex items-center gap-3">
-							<span className="text-sm text-foreground">
-								Welcome, {user.name}
-							</span>
-							<Button
-								onClick={signOut}
-								variant="ghost"
-								size="sm"
-								className="text-destructive hover:text-destructive"
-							>
-								Sign Out
-							</Button>
+							<Skeleton className="h-4 w-32" />
+							<Skeleton className="h-8 w-16" />
 						</div>
+					) : isAuthenticated && user ? (
+						<UserNav />
 					) : (
 						<div className="flex items-center gap-3">
 							<Button asChild variant="ghost" size="sm">
