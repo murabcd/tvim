@@ -36,12 +36,12 @@ export function Header() {
 						<div className="flex items-center gap-3">
 							<Button asChild variant="ghost" size="sm">
 								<Link to="/auth" search={{ mode: "login", redirect: "/" }}>
-									Sign In
+									Log in
 								</Link>
 							</Button>
 							<Button asChild size="sm">
 								<Link to="/auth" search={{ mode: "register", redirect: "/" }}>
-									Sign Up
+									Sign up
 								</Link>
 							</Button>
 						</div>

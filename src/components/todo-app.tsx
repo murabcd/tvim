@@ -163,7 +163,7 @@ export function TodoApp() {
 											: "Local storage mode"}
 									</span>
 								</div>
-								<div className="text-xs text-muted-foreground">
+								<div className="hidden md:block text-xs text-muted-foreground">
 									{isAuthenticated
 										? "Todos are saved to your account."
 										: "Todos are saved locally. Login to sync to database."}

@@ -16,7 +16,13 @@ export function TodoList({
 	if (todos.length === 0) {
 		return (
 			<div className="p-8 text-center text-muted-foreground">
-				<p>No todos yet. Use ":add &lt;text&gt;" to create your first todo.</p>
+				<p className="text-sm">
+					<span className="block md:hidden">No todos yet.</span>
+					<span className="hidden md:block">
+						No todos yet. Use buttons in normal mode or ":add &lt;text&gt;"
+						command to create your first todo.
+					</span>
+				</p>
 			</div>
 		);
 	}

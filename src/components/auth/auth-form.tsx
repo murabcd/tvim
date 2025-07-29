@@ -14,6 +14,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
 
 interface AuthFormProps {
 	mode: "login" | "register";
@@ -29,15 +30,17 @@ export function AuthForm({
 	className,
 	...props
 }: AuthFormProps & React.ComponentProps<"div">) {
+	const navigate = useNavigate();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [name, setName] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
+	const [isEmailLoading, setIsEmailLoading] = useState(false);
+	const [isGithubLoading, setIsGithubLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsLoading(true);
+		setIsEmailLoading(true);
 		setError(null);
 
 		try {
@@ -57,12 +60,13 @@ export function AuthForm({
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An error occurred");
 		} finally {
-			setIsLoading(false);
+			setIsEmailLoading(false);
 		}
 	};
 
 	const handleGithubLogin = async () => {
-		setIsLoading(true);
+		setIsGithubLoading(true);
+		setError(null);
 		try {
 			await signIn.social({
 				provider: "github",
@@ -70,12 +74,26 @@ export function AuthForm({
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An error occurred");
 		} finally {
-			setIsLoading(false);
+			setIsGithubLoading(false);
 		}
+	};
+
+	const handleLogoClick = () => {
+		navigate({ to: "/" });
 	};
 
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
+			<div className="flex justify-center">
+				<button
+					type="button"
+					onClick={handleLogoClick}
+					className="hover:opacity-80 transition-opacity cursor-pointer"
+					aria-label="Go to home page"
+				>
+					<Icons.tvim className="w-12 h-12 text-primary" />
+				</button>
+			</div>
 			<Card>
 				<CardHeader>
 					<CardTitle>
@@ -120,12 +138,12 @@ export function AuthForm({
 								<div className="flex items-center">
 									<Label htmlFor="password">Password</Label>
 									{mode === "login" && (
-										<a
-											href="#"
+										<button
+											type="button"
 											className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
 										>
 											Forgot your password?
-										</a>
+										</button>
 									)}
 								</div>
 								<Input
@@ -145,24 +163,37 @@ export function AuthForm({
 							)}
 
 							<div className="flex flex-col gap-3">
-								<Button type="submit" disabled={isLoading} className="w-full">
-									{isLoading
+								<Button
+									type="submit"
+									disabled={isEmailLoading || isGithubLoading}
+									className="w-full cursor-pointer"
+								>
+									{isEmailLoading
 										? "Loading..."
 										: mode === "login"
-											? "Login"
+											? "Log in"
 											: "Create Account"}
 								</Button>
 								<Button
 									type="button"
 									onClick={handleGithubLogin}
-									disabled={isLoading}
+									disabled={isEmailLoading || isGithubLoading}
 									variant="outline"
-									className="w-full"
+									className="w-full cursor-pointer"
 								>
-									<Icons.github className="w-4 h-4" />
-									{mode === "login"
-										? "Login with GitHub"
-										: "Sign up with GitHub"}
+									{isGithubLoading ? (
+										<>
+											<Icons.github className="w-4 h-4 animate-spin" />
+											Loading...
+										</>
+									) : (
+										<>
+											<Icons.github className="w-4 h-4 mr-2" />
+											{mode === "login"
+												? "Log in with GitHub"
+												: "Sign up with GitHub"}
+										</>
+									)}
 								</Button>
 							</div>
 						</div>
@@ -174,7 +205,7 @@ export function AuthForm({
 										<button
 											type="button"
 											onClick={onToggleMode}
-											className="underline underline-offset-4 hover:text-primary"
+											className="underline underline-offset-4 hover:text-primary cursor-pointer"
 										>
 											Sign up
 										</button>
@@ -185,9 +216,9 @@ export function AuthForm({
 										<button
 											type="button"
 											onClick={onToggleMode}
-											className="underline underline-offset-4 hover:text-primary"
+											className="underline underline-offset-4 hover:text-primary cursor-pointer"
 										>
-											Sign in
+											Log in
 										</button>
 									</>
 								)}
