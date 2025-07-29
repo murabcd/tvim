@@ -5,6 +5,7 @@ import {
 	createRootRoute,
 	HeadContent,
 	Scripts,
+	ScriptOnce,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -56,11 +57,17 @@ function RootComponent() {
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 	return (
-		<html lang="en">
+		<html suppressHydrationWarning lang="en">
 			<head>
 				<HeadContent />
 			</head>
 			<body>
+				<ScriptOnce>
+					{`document.documentElement.classList.toggle(
+						'dark',
+						localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+					)`}
+				</ScriptOnce>
 				{children}
 				<Scripts />
 			</body>

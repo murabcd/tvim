@@ -1,4 +1,5 @@
 import { ChevronUp, Moon, Sun, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +13,22 @@ import {
 
 export function UserNav() {
 	const { user, signOut } = useAuth();
+	const [theme, setTheme] = useState<"light" | "dark">("light");
+
+	useEffect(() => {
+		// Get initial theme
+		const isDark = document.documentElement.classList.contains("dark");
+		setTheme(isDark ? "dark" : "light");
+	}, []);
+
+	const toggleTheme = () => {
+		const newTheme = theme === "light" ? "dark" : "light";
+		setTheme(newTheme);
+
+		// Update localStorage and DOM
+		localStorage.theme = newTheme;
+		document.documentElement.classList.toggle("dark", newTheme === "dark");
+	};
 
 	if (!user) {
 		return null;
@@ -39,12 +56,15 @@ export function UserNav() {
 					className="cursor-pointer"
 					onSelect={(e) => {
 						e.preventDefault();
-						// TODO: Implement theme switching
-						console.log("Theme switcher clicked");
+						toggleTheme();
 					}}
 				>
-					<Sun className="h-4 w-4 mr-2" />
-					<span>Light mode</span>
+					{theme === "light" ? (
+						<Moon className="h-4 w-4 mr-2" />
+					) : (
+						<Sun className="h-4 w-4 mr-2" />
+					)}
+					<span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem

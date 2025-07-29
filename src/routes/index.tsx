@@ -22,9 +22,7 @@ function Home() {
 	return (
 		<div className="min-h-screen bg-gray-50">
 			<Header />
-			<main className="max-w-7xl mx-auto py-6 px-4">
-				<TodoApp />
-			</main>
+			<TodoApp />
 		</div>
 	);
 }

@@ -19,7 +19,7 @@ export function Header() {
 				>
 					<Icons.tvim className="w-6 h-6" />
 					<span>TVIM</span>
-					<span className="text-muted-foreground text-base font-normal ml-2">
+					<span className="hidden md:block text-muted-foreground text-base font-normal ml-2">
 						Vim Mode To-Do List
 					</span>
 				</Link>

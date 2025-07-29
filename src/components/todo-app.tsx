@@ -172,7 +172,7 @@ export function TodoApp() {
 						)}
 					</div>
 
-					<div className="text-xs text-muted-foreground space-y-1">
+					<div className="hidden md:block text-xs text-muted-foreground space-y-1">
 						<p>
 							<span className="font-semibold">Navigation:</span> j/k (up/down) |
 							g/G (top/bottom) | ↑/↓ (arrow keys)
