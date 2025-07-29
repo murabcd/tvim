@@ -25,6 +25,9 @@
 - [Drizzle](https://orm.drizzle.team)
   - Type-safe SQL ORM for TypeScript
   - Used for database schema migrations and type-safe queries
+- [Better Auth](https://github.com/murabcd/better-auth)
+  - Simple, modern authentication for full-stack TypeScript apps
+  - Used for secure, extensible authentication flows
 
 ## Deploy your own
 

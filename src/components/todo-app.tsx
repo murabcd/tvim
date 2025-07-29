@@ -18,7 +18,9 @@ export function TodoApp() {
 	const { todos: initialTodos } = useRouteContext({
 		from: "/",
 	}) as RouteContext;
-	const [mode, setMode] = useState<"normal" | "insert" | "command" | "visual">("normal");
+	const [mode, setMode] = useState<"normal" | "insert" | "command" | "visual">(
+		"normal",
+	);
 	const [inputValue, setInputValue] = useState("");
 	const [commandValue, setCommandValue] = useState("");
 	const [visualStart, setVisualStart] = useState<number>(0);
@@ -134,30 +136,30 @@ export function TodoApp() {
 	});
 
 	return (
-		<div className="min-h-screen bg-background text-foreground font-mono">
+		<div className="min-h-screen bg-background text-foreground">
 			<div className="container mx-auto p-4 max-w-4xl">
 				<div className="mb-10">
 					<h1 className="text-2xl font-bold mb-2">TVIM</h1>
 					<div className="text-xs text-muted-foreground space-y-1">
 						<p>
-							<strong>Navigation:</strong> j/k (up/down) | gg/G (top/bottom) |
-							↑/↓ (arrow keys)
+							<span className="font-semibold">Navigation:</span> j/k (up/down) |
+							g/G (top/bottom) | ↑/↓ (arrow keys)
 						</p>
 						<p>
-							<strong>Insert:</strong> i/I (insert) | o/O (new line) | a/A
-							(append) | ESC/Ctrl+C (exit)
+							<span className="font-semibold">Insert:</span> i/I (insert) | o/O
+							(new line) | a/A (append) | ESC (exit)
 						</p>
 						<p>
-							<strong>Edit:</strong> x/Space (toggle) | dd/D (delete) | u
-							(undo) | Ctrl+R (redo)
+							<span className="font-semibold">Edit:</span> x/Space (toggle) |
+							d/D (delete) | u (undo) | r (redo)
 						</p>
 						<p>
-							<strong>Copy/Paste:</strong> y/yy (yank) | p/P (paste) | v
-							(visual mode)
+							<span className="font-semibold">Copy/Paste:</span> y/yy (yank) |
+							p/P (paste) | v (visual mode)
 						</p>
 						<p>
-							<strong>Command:</strong> : (command mode) | :add &lt;text&gt;
-							(add todo)
+							<span className="font-semibold">Command:</span> : (command mode) |
+							:add &lt;text&gt; (add todo)
 						</p>
 					</div>
 				</div>
@@ -167,7 +169,7 @@ export function TodoApp() {
 						<div className="divide-y divide-border">
 							{Array.from({ length: 3 }, (_, index) => (
 								<div
-									key={`loading-skeleton-${index}`}
+									key={`loading-skeleton-${crypto.randomUUID()}`}
 									className="flex items-center gap-3 p-3"
 								>
 									<div className="w-8 text-right text-sm text-muted-foreground">
@@ -180,10 +182,12 @@ export function TodoApp() {
 							))}
 						</div>
 					) : (
-						<TodoList 
-							todos={state.todos} 
+						<TodoList
+							todos={state.todos}
 							selectedIndex={state.selectedIndex}
-							visualSelection={mode === "visual" ? getVisualSelection() : undefined}
+							visualSelection={
+								mode === "visual" ? getVisualSelection() : undefined
+							}
 						/>
 					)}
 
@@ -231,7 +235,8 @@ export function TodoApp() {
 								<div className="w-8 text-center text-muted-foreground">~</div>
 								<div className="flex-1 px-2 text-muted-foreground">
 									{mode.toUpperCase()} MODE - {state.todos.length} todos{" "}
-									{mode === "visual" && `(${getVisualSelection().end - getVisualSelection().start + 1} selected) `}
+									{mode === "visual" &&
+										`(${getVisualSelection().end - getVisualSelection().start + 1} selected) `}
 									{loading && "(loading...)"}
 								</div>
 							</div>

@@ -1,5 +1,6 @@
 {
 	"type": "module",
+	"version": "1.0.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -10,12 +11,14 @@
 		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {
+		"@radix-ui/react-label": "^2.1.7",
 		"@radix-ui/react-slot": "^1.2.3",
 		"@t3-oss/env-core": "^0.13.8",
 		"@tailwindcss/postcss": "^4.1.11",
 		"@tanstack/react-query": "^5.83.0",
 		"@tanstack/react-router": "^1.130.1",
 		"@tanstack/react-start": "^1.130.1",
+		"better-auth": "^1.3.4",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"dotenv": "^17.2.1",

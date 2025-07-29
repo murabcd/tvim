@@ -1,4 +1,6 @@
 import { pgTable, text, boolean, timestamp } from "drizzle-orm/pg-core";
+// Import Better Auth schema
+export * from "../../auth-schema";
 
 export const todos = pgTable("todos", {
 	id: text("id").primaryKey(),
