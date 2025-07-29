@@ -62,7 +62,7 @@ export function TodoList({
 						</div>
 
 						<div className="text-xs text-muted-foreground">
-							{todo.created.toLocaleDateString()}
+							{new Date(todo.created).toLocaleDateString()}
 						</div>
 					</div>
 				);

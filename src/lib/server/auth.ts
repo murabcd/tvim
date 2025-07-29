@@ -19,3 +19,19 @@ export const auth = betterAuth({
 		},
 	},
 });
+
+// Server-side session helper using Better Auth
+export const getSession = async () => {
+	try {
+		// For TanStack Start with Better Auth, we'll use a simpler approach
+		// The session will be handled by the client-side auth state
+		// This function is mainly used for server-side operations
+
+		// For now, return null to indicate no server-side session
+		// The client-side useSession hook will handle the actual session state
+		return null;
+	} catch (error) {
+		console.error("Error getting session:", error);
+		return null;
+	}
+};

@@ -1,8 +1,10 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
+import { useLocalStorage } from "usehooks-ts";
 
 import type { Todo, AppState } from "@/lib/schema";
+import { useAuth } from "@/hooks/use-auth";
 
 import {
 	getAllTodos,
@@ -13,19 +15,58 @@ import {
 } from "@/lib/todo-server";
 
 const TODOS_QUERY_KEY = ["todos"];
+const LOCAL_TODOS_KEY = "tvim-local-todos";
 
 export function useTodos() {
 	const queryClient = useQueryClient();
+	const { isAuthenticated, isLoading: authLoading } = useAuth();
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [history, setHistory] = useState<Todo[][]>([]);
 	const [historyIndex, setHistoryIndex] = useState(-1);
 	const clipboardRef = useRef<Todo | null>(null);
+	const hasSyncedRef = useRef(false);
 
-	// Query for todos
-	const { data: todos = [], isLoading } = useQuery({
+	// Use usehooks-ts useLocalStorage for better localStorage management
+	const [localTodos, setLocalTodos, removeLocalTodos] = useLocalStorage<Todo[]>(
+		LOCAL_TODOS_KEY,
+		[],
+		{
+			serializer: (value) => JSON.stringify(value),
+			deserializer: (value) => {
+				try {
+					const todos = JSON.parse(value);
+					// Ensure created field is a Date object
+					return todos.map((todo: any) => ({
+						...todo,
+						created: new Date(todo.created),
+					}));
+				} catch {
+					return [];
+				}
+			},
+		},
+	);
+
+	// Query for todos (only enabled when auth state is determined)
+	const { data: serverTodos = [], isLoading: queryLoading } = useQuery({
 		queryKey: TODOS_QUERY_KEY,
 		queryFn: getAllTodos,
+		enabled: !authLoading, // Only run query when auth loading is complete
 	});
+
+	// Use local todos when not authenticated, server todos when authenticated
+	// Show local todos optimistically while auth is loading
+	const todos = authLoading
+		? localTodos
+		: isAuthenticated
+			? serverTodos.map((todo) => ({
+					...todo,
+					userId: todo.userId || undefined,
+				}))
+			: localTodos;
+
+	// Show loading state while auth is loading or query is loading
+	const isLoading = authLoading || (isAuthenticated && queryLoading);
 
 	const state: AppState = {
 		todos,
@@ -35,9 +76,13 @@ export function useTodos() {
 	// Initialize todos from server-side data
 	const initializeTodos = useCallback(
 		(initialTodos: Todo[]) => {
-			queryClient.setQueryData(TODOS_QUERY_KEY, initialTodos);
+			if (isAuthenticated) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, initialTodos);
+			} else {
+				setLocalTodos(initialTodos);
+			}
 		},
-		[queryClient],
+		[queryClient, isAuthenticated, setLocalTodos],
 	);
 
 	const saveToHistory = useCallback(
@@ -56,6 +101,8 @@ export function useTodos() {
 	const createTodoMutation = useMutation({
 		mutationFn: createTodo,
 		onMutate: async ({ data: text }) => {
+			if (!isAuthenticated) return null;
+
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
 			const previousTodos =
 				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
@@ -73,7 +120,7 @@ export function useTodos() {
 			return { previousTodos, tempTodo };
 		},
 		onSuccess: (newTodo, _, context) => {
-			if (context) {
+			if (context && isAuthenticated) {
 				const previousTodos =
 					queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
 				const updatedTodos = previousTodos.map((todo) =>
@@ -83,16 +130,79 @@ export function useTodos() {
 			}
 		},
 		onError: (_, __, context) => {
-			if (context?.previousTodos) {
+			if (context?.previousTodos && isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
 			}
 		},
 	});
 
+	// Sync local todos to database when user logs in (only once)
+	useEffect(() => {
+		if (isAuthenticated && localTodos.length > 0 && !hasSyncedRef.current) {
+			hasSyncedRef.current = true; // Mark as synced to prevent infinite loop
+
+			// Immediately add local todos to the query cache for instant UI update
+			const currentServerTodos =
+				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+			const syncedTodos = localTodos.map((todo) => ({
+				...todo,
+				id: `syncing-${todo.id}`, // Temporary ID to avoid conflicts
+			}));
+
+			queryClient.setQueryData(TODOS_QUERY_KEY, [
+				...syncedTodos,
+				...currentServerTodos,
+			]);
+
+			// Sync local todos to database
+			const syncPromises = localTodos.map((todo) =>
+				createTodoMutation.mutateAsync({ data: todo.text }),
+			);
+
+			// Wait for all todos to be synced, then clear local storage and refetch
+			Promise.all(syncPromises)
+				.then(() => {
+					// Clear local todos after successful sync
+					setLocalTodos([]);
+					// Invalidate the query cache to refetch todos from database
+					queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
+				})
+				.catch((error) => {
+					console.error("Failed to sync todos:", error);
+					hasSyncedRef.current = false; // Reset on error so we can retry
+					// Remove the temporary todos from cache on error
+					queryClient.setQueryData(TODOS_QUERY_KEY, currentServerTodos);
+				});
+		}
+	}, [
+		isAuthenticated,
+		localTodos,
+		createTodoMutation,
+		queryClient,
+		setLocalTodos,
+	]);
+
+	// Reset sync flag when user logs out
+	useEffect(() => {
+		if (!isAuthenticated) {
+			hasSyncedRef.current = false;
+		}
+	}, [isAuthenticated]);
+
+	// Refetch todos when authentication state changes
+	useEffect(() => {
+		if (isAuthenticated) {
+			// When user logs in, refetch todos from database
+			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
+		}
+	}, [isAuthenticated, queryClient]);
+
 	// Update todo mutation with optimistic update
 	const updateTodoMutation = useMutation({
 		mutationFn: updateTodo,
 		onMutate: async ({ data: updateData }) => {
+			if (!isAuthenticated) return null;
+
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
 			const previousTodos =
 				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
@@ -107,7 +217,7 @@ export function useTodos() {
 			return { previousTodos };
 		},
 		onError: (_, __, context) => {
-			if (context?.previousTodos) {
+			if (context?.previousTodos && isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
 			}
 		},
@@ -117,6 +227,8 @@ export function useTodos() {
 	const deleteTodoMutation = useMutation({
 		mutationFn: deleteTodo,
 		onMutate: async ({ data: todoId }) => {
+			if (!isAuthenticated) return null;
+
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
 			const previousTodos =
 				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
@@ -131,7 +243,7 @@ export function useTodos() {
 			return { previousTodos };
 		},
 		onError: (_, __, context) => {
-			if (context?.previousTodos) {
+			if (context?.previousTodos && isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
 			}
 		},
@@ -141,6 +253,8 @@ export function useTodos() {
 	const clearTodosMutation = useMutation({
 		mutationFn: clearAllTodos,
 		onMutate: async () => {
+			if (!isAuthenticated) return null;
+
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
 			const previousTodos =
 				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
@@ -151,7 +265,7 @@ export function useTodos() {
 			return { previousTodos };
 		},
 		onError: (_, __, context) => {
-			if (context?.previousTodos) {
+			if (context?.previousTodos && isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
 			}
 		},
@@ -159,8 +273,9 @@ export function useTodos() {
 
 	const addTodo = useCallback(
 		async (text: string, position?: "below" | "above") => {
-			const currentTodos =
-				queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+			const currentTodos = isAuthenticated
+				? queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || []
+				: localTodos;
 
 			// Create temporary todo for optimistic update
 			const tempTodo: Todo = {
@@ -192,12 +307,23 @@ export function useTodos() {
 				newSelectedIndex = 0;
 			}
 
-			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-			setSelectedIndex(newSelectedIndex);
+			if (isAuthenticated) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
+				createTodoMutation.mutate({ data: text });
+			} else {
+				setLocalTodos(optimisticTodos);
+			}
 
-			createTodoMutation.mutate({ data: text });
+			setSelectedIndex(newSelectedIndex);
 		},
-		[createTodoMutation, queryClient, selectedIndex],
+		[
+			createTodoMutation,
+			queryClient,
+			selectedIndex,
+			isAuthenticated,
+			localTodos,
+			setLocalTodos,
+		],
 	);
 
 	const deleteTodoById = useCallback(
@@ -205,10 +331,23 @@ export function useTodos() {
 			const todo = todos[index];
 			if (!todo) return;
 
-			deleteTodoMutation.mutate({ data: todo.id });
+			if (isAuthenticated) {
+				deleteTodoMutation.mutate({ data: todo.id });
+			} else {
+				const updatedTodos = localTodos.filter((_, i) => i !== index);
+				setLocalTodos(updatedTodos);
+			}
+
 			setSelectedIndex(Math.max(0, Math.min(selectedIndex, todos.length - 2)));
 		},
-		[deleteTodoMutation, todos, selectedIndex],
+		[
+			deleteTodoMutation,
+			todos,
+			selectedIndex,
+			isAuthenticated,
+			localTodos,
+			setLocalTodos,
+		],
 	);
 
 	const toggleTodo = useCallback(
@@ -216,11 +355,18 @@ export function useTodos() {
 			const todo = todos[index];
 			if (!todo) return;
 
-			updateTodoMutation.mutate({
-				data: { id: todo.id, completed: !todo.completed },
-			});
+			if (isAuthenticated) {
+				updateTodoMutation.mutate({
+					data: { id: todo.id, completed: !todo.completed },
+				});
+			} else {
+				const updatedTodos = localTodos.map((t, i) =>
+					i === index ? { ...t, completed: !t.completed } : t,
+				);
+				setLocalTodos(updatedTodos);
+			}
 		},
-		[updateTodoMutation, todos],
+		[updateTodoMutation, todos, isAuthenticated, localTodos, setLocalTodos],
 	);
 
 	const moveSelection = useCallback(
@@ -253,8 +399,12 @@ export function useTodos() {
 	}, []);
 
 	const clearTodos = useCallback(async () => {
-		clearTodosMutation.mutate({});
-	}, [clearTodosMutation]);
+		if (isAuthenticated) {
+			clearTodosMutation.mutate({});
+		} else {
+			setLocalTodos([]);
+		}
+	}, [clearTodosMutation, isAuthenticated, setLocalTodos]);
 
 	const yankTodo = useCallback(() => {
 		if (todos[selectedIndex]) {
@@ -265,10 +415,12 @@ export function useTodos() {
 	const pasteTodo = useCallback(async () => {
 		if (!clipboardRef.current) return;
 
-		const currentTodos =
-			queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+		const currentTodos = isAuthenticated
+			? queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || []
+			: localTodos;
+
 		const tempTodo: Todo = {
-			id: -Math.floor(Math.random() * 1000000),
+			id: `temp-${nanoid()}`,
 			text: clipboardRef.current.text,
 			completed: false,
 			created: new Date(),
@@ -280,50 +432,84 @@ export function useTodos() {
 			...currentTodos.slice(selectedIndex + 1),
 		];
 
-		queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-		createTodoMutation.mutate({ data: clipboardRef.current.text });
-	}, [createTodoMutation, queryClient, selectedIndex]);
+		if (isAuthenticated) {
+			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
+			createTodoMutation.mutate({ data: clipboardRef.current.text });
+		} else {
+			setLocalTodos(optimisticTodos);
+		}
+	}, [
+		createTodoMutation,
+		queryClient,
+		selectedIndex,
+		isAuthenticated,
+		localTodos,
+		setLocalTodos,
+	]);
 
 	const undo = useCallback(() => {
 		if (historyIndex > 0) {
 			const previousState = history[historyIndex - 1];
-			queryClient.setQueryData(TODOS_QUERY_KEY, [...previousState]);
+			if (isAuthenticated) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, [...previousState]);
+			} else {
+				setLocalTodos([...previousState]);
+			}
 			setHistoryIndex((prev) => prev - 1);
 		}
-	}, [history, historyIndex, queryClient]);
+	}, [history, historyIndex, queryClient, isAuthenticated, setLocalTodos]);
 
 	const redo = useCallback(() => {
 		if (historyIndex < history.length - 1) {
 			const nextState = history[historyIndex + 1];
-			queryClient.setQueryData(TODOS_QUERY_KEY, [...nextState]);
+			if (isAuthenticated) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, [...nextState]);
+			} else {
+				setLocalTodos([...nextState]);
+			}
 			setHistoryIndex((prev) => prev + 1);
 		}
-	}, [history, historyIndex, queryClient]);
+	}, [history, historyIndex, queryClient, isAuthenticated, setLocalTodos]);
 
 	const selectAll = useCallback(async () => {
 		if (todos.length === 0) return;
 
 		const allCompleted = todos.every((todo) => todo.completed);
 
-		// Optimistically update all todos
-		const optimisticTodos = todos.map((todo) => ({
-			...todo,
-			completed: !allCompleted,
-		}));
+		if (isAuthenticated) {
+			// Optimistically update all todos
+			const optimisticTodos = todos.map((todo) => ({
+				...todo,
+				completed: !allCompleted,
+			}));
 
-		queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
+			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
 
-		// Update all todos in the database
-		Promise.all(
-			todos.map((todo) =>
-				updateTodoMutation.mutateAsync({
-					data: { id: todo.id, completed: !allCompleted },
-				}),
-			),
-		).catch((error) => {
-			console.error("Failed to toggle all todos:", error);
-		});
-	}, [todos, queryClient, updateTodoMutation]);
+			// Update all todos in the database
+			Promise.all(
+				todos.map((todo) =>
+					updateTodoMutation.mutateAsync({
+						data: { id: todo.id, completed: !allCompleted },
+					}),
+				),
+			).catch((error) => {
+				console.error("Failed to toggle all todos:", error);
+			});
+		} else {
+			const updatedTodos = localTodos.map((todo) => ({
+				...todo,
+				completed: !allCompleted,
+			}));
+			setLocalTodos(updatedTodos);
+		}
+	}, [
+		todos,
+		queryClient,
+		updateTodoMutation,
+		isAuthenticated,
+		localTodos,
+		setLocalTodos,
+	]);
 
 	return {
 		state,
@@ -348,5 +534,6 @@ export function useTodos() {
 		undo,
 		redo,
 		selectAll,
+		isAuthenticated,
 	};
 }

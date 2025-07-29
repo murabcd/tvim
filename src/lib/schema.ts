@@ -1,9 +1,9 @@
 import { pgTable, text, boolean, timestamp } from "drizzle-orm/pg-core";
-// Import Better Auth schema
 export * from "../../auth-schema";
 
 export const todos = pgTable("todos", {
 	id: text("id").primaryKey(),
+	userId: text("user_id"),
 	text: text("text").notNull(),
 	completed: boolean("completed").default(false).notNull(),
 	created: timestamp("created").defaultNow().notNull(),
@@ -12,6 +12,7 @@ export const todos = pgTable("todos", {
 
 export interface Todo {
 	id: string;
+	userId?: string;
 	text: string;
 	completed: boolean;
 	created: Date;

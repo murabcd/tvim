@@ -3,6 +3,7 @@ import { useRouteContext } from "@tanstack/react-router";
 
 import { useTodos } from "@/hooks/use-todos";
 import { useVimKeys } from "@/hooks/use-vim-keys";
+import { useAuth } from "@/hooks/use-auth";
 
 import type { Todo } from "@/lib/schema";
 
@@ -26,6 +27,7 @@ export function TodoApp() {
 	const [visualStart, setVisualStart] = useState<number>(0);
 	const [visualEnd, setVisualEnd] = useState<number>(0);
 
+	const { isAuthenticated } = useAuth();
 	const {
 		state,
 		loading,
@@ -140,6 +142,28 @@ export function TodoApp() {
 			<div className="container mx-auto p-4 max-w-4xl">
 				<div className="mb-10">
 					<h1 className="text-2xl font-bold mb-2">TVIM</h1>
+
+					{/* Authentication Status */}
+					<div className="mb-4 p-3 rounded-lg border border-border bg-muted/30">
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<div
+									className={`w-2 h-2 rounded-full ${isAuthenticated ? "bg-green-500" : "bg-yellow-500"}`}
+								></div>
+								<span className="text-sm font-medium">
+									{isAuthenticated
+										? "Connected to database"
+										: "Local storage mode"}
+								</span>
+							</div>
+							<div className="text-xs text-muted-foreground">
+								{isAuthenticated
+									? "Todos are saved to your account."
+									: "Todos are saved locally. Login to sync to database."}
+							</div>
+						</div>
+					</div>
+
 					<div className="text-xs text-muted-foreground space-y-1">
 						<p>
 							<span className="font-semibold">Navigation:</span> j/k (up/down) |
@@ -238,6 +262,7 @@ export function TodoApp() {
 									{mode === "visual" &&
 										`(${getVisualSelection().end - getVisualSelection().start + 1} selected) `}
 									{loading && "(loading...)"}
+									{!isAuthenticated && state.todos.length > 0 && " (local)"}
 								</div>
 							</div>
 						)}
