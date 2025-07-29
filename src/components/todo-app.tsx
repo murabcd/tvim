@@ -10,6 +10,14 @@ import type { Todo } from "@/lib/schema";
 import { Input } from "@/components/ui/input";
 import { TodoList } from "@/components/todo-list";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowUpDown, ChevronDown } from "lucide-react";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface RouteContext {
 	todos: Todo[];
@@ -26,6 +34,9 @@ export function TodoApp() {
 	const [commandValue, setCommandValue] = useState("");
 	const [visualStart, setVisualStart] = useState<number>(0);
 	const [visualEnd, setVisualEnd] = useState<number>(0);
+	const [sortType, setSortType] = useState<
+		"none" | "date-newest" | "date-oldest"
+	>("none");
 
 	const { isAuthenticated, isLoading: authLoading } = useAuth();
 	const {
@@ -107,6 +118,17 @@ export function TodoApp() {
 			deleteTodo(i);
 		}
 		setMode("normal");
+	};
+
+	const getSortButtonText = () => {
+		switch (sortType) {
+			case "date-newest":
+				return "Newest First";
+			case "date-oldest":
+				return "Oldest First";
+			default:
+				return "Sort";
+		}
 	};
 
 	useVimKeys({
@@ -196,6 +218,32 @@ export function TodoApp() {
 					</div>
 				</div>
 
+				{state.todos.length > 0 && (
+					<div className="flex justify-end mb-4">
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button
+									variant="outline"
+									size="sm"
+									className="flex items-center gap-2 cursor-pointer"
+								>
+									<ArrowUpDown className="w-4 h-4" />
+									{getSortButtonText()}
+									<ChevronDown className="ml-2 h-4 w-4" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								<DropdownMenuItem onClick={() => setSortType("date-newest")}>
+									Date (Newest First)
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setSortType("date-oldest")}>
+									Date (Oldest First)
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+				)}
+
 				<div className="border border-border rounded-lg overflow-hidden">
 					{loading && state.todos.length === 0 ? (
 						<div className="divide-y divide-border">
@@ -220,6 +268,7 @@ export function TodoApp() {
 							visualSelection={
 								mode === "visual" ? getVisualSelection() : undefined
 							}
+							sortType={sortType}
 						/>
 					)}
 

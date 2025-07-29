@@ -6,12 +6,14 @@ interface TodoListProps {
 	todos: Todo[];
 	selectedIndex: number;
 	visualSelection?: { start: number; end: number };
+	sortType?: "none" | "date-newest" | "date-oldest";
 }
 
 export function TodoList({
 	todos,
 	selectedIndex,
 	visualSelection,
+	sortType = "none",
 }: TodoListProps) {
 	if (todos.length === 0) {
 		return (
@@ -32,10 +34,55 @@ export function TodoList({
 		return index >= visualSelection.start && index <= visualSelection.end;
 	};
 
+	// Sort todos based on sortType
+	const sortedTodos = (() => {
+		if (sortType === "none") return todos;
+
+		const sorted = [...todos];
+
+		switch (sortType) {
+			case "date-newest":
+				return sorted.sort((a, b) => {
+					const dateA = new Date(a.created).getTime();
+					const dateB = new Date(b.created).getTime();
+
+					// If dates are the same, sort by ID to maintain consistent order
+					if (dateA === dateB) {
+						return a.id.localeCompare(b.id);
+					}
+
+					return dateB - dateA; // Newest first
+				});
+			case "date-oldest":
+				return sorted.sort((a, b) => {
+					const dateA = new Date(a.created).getTime();
+					const dateB = new Date(b.created).getTime();
+
+					// If dates are the same, sort by ID to maintain consistent order
+					if (dateA === dateB) {
+						return a.id.localeCompare(b.id);
+					}
+
+					return dateA - dateB; // Oldest first
+				});
+			default:
+				return todos;
+		}
+	})();
+
+	// Find the currently selected todo in the sorted list
+	const selectedTodo = todos[selectedIndex];
+	const sortedSelectedIndex = sortedTodos.findIndex(
+		(todo) => todo.id === selectedTodo?.id,
+	);
+
 	return (
 		<div className="divide-y divide-border">
-			{todos.map((todo, index) => {
-				const isSelected = index === selectedIndex;
+			{sortedTodos.map((todo, index) => {
+				const isSelected =
+					sortType !== "none"
+						? index === sortedSelectedIndex
+						: index === selectedIndex;
 				const isVisualSelected = isVisuallySelected(index);
 
 				return (
@@ -68,7 +115,9 @@ export function TodoList({
 						</div>
 
 						<div className="text-xs text-muted-foreground">
-							{new Date(todo.created).toLocaleDateString()}
+							{sortType === "date-newest" || sortType === "date-oldest"
+								? new Date(todo.created).toLocaleString()
+								: new Date(todo.created).toLocaleDateString()}
 						</div>
 					</div>
 				);

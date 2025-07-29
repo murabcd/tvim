@@ -11,29 +11,29 @@ export function Header() {
 	const { user, isAuthenticated, isLoading } = useAuth();
 
 	return (
-		<header className="sticky top-0 z-50 bg-background border-b border-border px-4 py-3">
-			<div className="max-w-7xl mx-auto flex items-center justify-between">
+		<header className="sticky top-0 z-50 bg-background border-b border-border px-4 py-2">
+			<div className="max-w-6xl mx-auto flex items-center justify-between">
 				<Link
 					to="/"
-					className="flex items-center gap-2 text-xl font-bold text-foreground"
+					className="flex items-center gap-1 text-xl font-bold text-foreground"
 				>
 					<Icons.tvim className="w-6 h-6" />
 					<span>TVIM</span>
-					<span className="hidden md:block text-muted-foreground text-base font-normal ml-2">
+					<span className="hidden md:block text-muted-foreground text-base font-normal ml-1">
 						Vim Mode To-Do List
 					</span>
 				</Link>
 
-				<div className="flex items-center gap-4">
+				<div className="flex items-center gap-2">
 					{isLoading ? (
-						<div className="flex items-center gap-3">
+						<div className="flex items-center gap-2">
 							<Skeleton className="h-4 w-32" />
 							<Skeleton className="h-8 w-16" />
 						</div>
 					) : isAuthenticated && user ? (
 						<UserNav />
 					) : (
-						<div className="flex items-center gap-3">
+						<div className="flex items-center gap-2">
 							<Button asChild variant="ghost" size="sm">
 								<Link to="/auth" search={{ mode: "login", redirect: "/" }}>
 									Log in
