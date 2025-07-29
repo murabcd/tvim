@@ -183,7 +183,7 @@ export function AuthForm({
 								>
 									{isGithubLoading ? (
 										<>
-											<Icons.github className="w-4 h-4 animate-spin" />
+											<Icons.github className="w-4 h-4" />
 											Loading...
 										</>
 									) : (
