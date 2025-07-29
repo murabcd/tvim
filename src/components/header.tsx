@@ -12,15 +12,15 @@ export function Header() {
 
 	return (
 		<header className="sticky top-0 z-50 bg-background border-b border-border px-4 py-2">
-			<div className="max-w-6xl mx-auto flex items-center justify-between">
+			<div className="max-w-5xl mx-auto flex items-center justify-between">
 				<Link
 					to="/"
 					className="flex items-center gap-1 text-xl font-bold text-foreground"
 				>
 					<Icons.tvim className="w-6 h-6" />
 					<span>TVIM</span>
-					<span className="hidden md:block text-muted-foreground text-base font-normal ml-1">
-						Vim Mode To-Do List
+					<span className="hidden md:block text-muted-foreground text-xs font-normal ml-2">
+						Vim Mode To Do List
 					</span>
 				</Link>
 

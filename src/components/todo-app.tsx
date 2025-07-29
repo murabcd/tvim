@@ -123,9 +123,9 @@ export function TodoApp() {
 	const getSortButtonText = () => {
 		switch (sortType) {
 			case "date-newest":
-				return "Newest First";
+				return "Newest first";
 			case "date-oldest":
-				return "Oldest First";
+				return "Oldest first";
 			default:
 				return "Sort";
 		}
@@ -234,10 +234,10 @@ export function TodoApp() {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
 								<DropdownMenuItem onClick={() => setSortType("date-newest")}>
-									Date (Newest First)
+									Date: Newest first
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => setSortType("date-oldest")}>
-									Date (Oldest First)
+									Date: Oldest first
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
