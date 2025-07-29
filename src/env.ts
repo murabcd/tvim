@@ -8,8 +8,11 @@ export const env = createEnv({
 		BETTER_AUTH_URL: z.string().url().optional(),
 		GITHUB_CLIENT_ID: z.string().optional(),
 		GITHUB_CLIENT_SECRET: z.string().optional(),
-		BASE_URL: z.string().url(),
 	},
+	client: {
+		VITE_BASE_URL: z.string().url().optional(),
+	},
+	clientPrefix: "VITE_",
 	runtimeEnv: {
 		...process.env,
 	},
