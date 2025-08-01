@@ -27,7 +27,7 @@ export function useTodos() {
 	const hasSyncedRef = useRef(false);
 
 	// Use usehooks-ts useLocalStorage for better localStorage management
-	const [localTodos, setLocalTodos, removeLocalTodos] = useLocalStorage<Todo[]>(
+	const [localTodos, setLocalTodos] = useLocalStorage<Todo[]>(
 		LOCAL_TODOS_KEY,
 		[],
 		{
@@ -128,6 +128,8 @@ export function useTodos() {
 				);
 				queryClient.setQueryData(TODOS_QUERY_KEY, updatedTodos);
 			}
+			// Invalidate and refetch to ensure consistency with server state
+			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
 		},
 		onError: (_, __, context) => {
 			if (context?.previousTodos && isAuthenticated) {
@@ -216,6 +218,10 @@ export function useTodos() {
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
 			return { previousTodos };
 		},
+		onSuccess: () => {
+			// Invalidate and refetch to ensure consistency with server state
+			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
+		},
 		onError: (_, __, context) => {
 			if (context?.previousTodos && isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
@@ -242,6 +248,10 @@ export function useTodos() {
 
 			return { previousTodos };
 		},
+		onSuccess: () => {
+			// Invalidate and refetch to ensure consistency with server state
+			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
+		},
 		onError: (_, __, context) => {
 			if (context?.previousTodos && isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, context.previousTodos);
@@ -263,6 +273,10 @@ export function useTodos() {
 			queryClient.setQueryData(TODOS_QUERY_KEY, []);
 
 			return { previousTodos };
+		},
+		onSuccess: () => {
+			// Invalidate and refetch to ensure consistency with server state
+			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
 		},
 		onError: (_, __, context) => {
 			if (context?.previousTodos && isAuthenticated) {

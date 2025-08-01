@@ -19,6 +19,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HelpModal } from "@/components/help-modal";
+import { DeleteTodoDialog } from "@/components/delete-todo-dialog";
 
 interface RouteContext {
 	todos: Todo[];
@@ -40,6 +41,17 @@ export function TodoApp() {
 	>("none");
 	const [helpOpen, setHelpOpen] = useState(false);
 	const [editingTodoIndex, setEditingTodoIndex] = useState<number | null>(null);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [todoToDelete, setTodoToDelete] = useState<{
+		index: number;
+		text: string;
+	} | null>(null);
+	const [visualSelectionToDelete, setVisualSelectionToDelete] = useState<{
+		start: number;
+		end: number;
+		todoTexts: string[];
+	} | null>(null);
+	const [lastDeleteTime, setLastDeleteTime] = useState<number>(0);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -182,13 +194,73 @@ export function TodoApp() {
 		setMode("normal");
 	};
 
+	const handleDeleteTodo = (index: number) => {
+		const todo = state.todos[index];
+		if (!todo) return;
+
+		const now = Date.now();
+		const timeSinceLastDelete = now - lastDeleteTime;
+
+		// If pressed 'd' twice within 500ms, delete immediately
+		if (timeSinceLastDelete < 500) {
+			deleteTodo(index);
+			setLastDeleteTime(0); // Reset the timer
+			setDeleteDialogOpen(false); // Close the dialog if it's open
+			setTodoToDelete(null); // Clear the todo to delete
+		} else {
+			// First press - show confirmation dialog
+			setTodoToDelete({ index, text: todo.text });
+			setDeleteDialogOpen(true);
+			setLastDeleteTime(now);
+		}
+	};
+
+	const handleConfirmDelete = () => {
+		if (todoToDelete) {
+			deleteTodo(todoToDelete.index);
+			setDeleteDialogOpen(false);
+			setTodoToDelete(null);
+			setLastDeleteTime(0); // Reset the timer after confirming
+		} else if (visualSelectionToDelete) {
+			// Delete visual selection from end to start to avoid index shifting issues
+			for (
+				let i = visualSelectionToDelete.end;
+				i >= visualSelectionToDelete.start;
+				i--
+			) {
+				deleteTodo(i);
+			}
+			setMode("normal");
+			setDeleteDialogOpen(false);
+			setVisualSelectionToDelete(null);
+			setLastDeleteTime(0); // Reset the timer after confirming
+		}
+	};
+
 	const handleVisualDelete = () => {
 		const { start, end } = getVisualSelection();
-		// Delete from end to start to avoid index shifting issues
-		for (let i = end; i >= start; i--) {
-			deleteTodo(i);
+		const selectedTodos = state.todos.slice(start, end + 1);
+		const todoTexts = selectedTodos.map((todo) => todo.text);
+
+		const now = Date.now();
+		const timeSinceLastDelete = now - lastDeleteTime;
+
+		// If pressed 'd' twice within 500ms, delete immediately
+		if (timeSinceLastDelete < 500) {
+			// Delete from end to start to avoid index shifting issues
+			for (let i = end; i >= start; i--) {
+				deleteTodo(i);
+			}
+			setMode("normal");
+			setLastDeleteTime(0); // Reset the timer
+			setVisualSelectionToDelete(null); // Clear the selection to delete
+			setDeleteDialogOpen(false); // Close the dialog if it's open
+		} else {
+			// First press - show confirmation dialog
+			setVisualSelectionToDelete({ start, end, todoTexts });
+			setDeleteDialogOpen(true);
+			setLastDeleteTime(now);
 		}
-		setMode("normal");
 	};
 
 	const getSortButtonText = () => {
@@ -233,7 +305,7 @@ export function TodoApp() {
 		onUndo: undo,
 		onRedo: redo,
 		onSelectAll: selectAll,
-		onDeleteLine: () => deleteTodo(state.selectedIndex),
+		onDeleteLine: () => handleDeleteTodo(state.selectedIndex),
 		onYankTodo: yankTodo,
 		onPasteTodo: pasteTodo,
 		onPasteTodoAbove: pasteTodoAbove,
@@ -425,6 +497,23 @@ export function TodoApp() {
 				</div>
 			</div>
 			<HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
+			<DeleteTodoDialog
+				open={deleteDialogOpen}
+				onOpenChange={(open) => {
+					setDeleteDialogOpen(open);
+					if (!open) {
+						setLastDeleteTime(0); // Reset timer when dialog is closed
+						setTodoToDelete(null);
+						setVisualSelectionToDelete(null);
+					}
+				}}
+				onConfirm={handleConfirmDelete}
+				todoText={
+					visualSelectionToDelete
+						? `${visualSelectionToDelete.todoTexts.length} selected todos`
+						: todoToDelete?.text || ""
+				}
+			/>
 		</div>
 	);
 }
