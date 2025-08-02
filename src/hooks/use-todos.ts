@@ -62,6 +62,7 @@ export function useTodos() {
 			? serverTodos.map((todo) => ({
 					...todo,
 					userId: todo.userId || undefined,
+					dueDate: todo.dueDate || undefined,
 				}))
 			: localTodos;
 
@@ -100,7 +101,7 @@ export function useTodos() {
 	// Create todo mutation with optimistic update
 	const createTodoMutation = useMutation({
 		mutationFn: createTodo,
-		onMutate: async ({ data: text }) => {
+		onMutate: async ({ data }) => {
 			if (!isAuthenticated) return null;
 
 			await queryClient.cancelQueries({ queryKey: TODOS_QUERY_KEY });
@@ -112,8 +113,9 @@ export function useTodos() {
 			// Create temporary todo for optimistic update
 			const tempTodo: Todo = {
 				id: `temp-${nanoid()}`,
-				text,
+				text: data.text,
 				completed: false,
+				dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
 				created: new Date(),
 			};
 
@@ -158,7 +160,12 @@ export function useTodos() {
 
 			// Sync local todos to database
 			const syncPromises = localTodos.map((todo) =>
-				createTodoMutation.mutateAsync({ data: todo.text }),
+				createTodoMutation.mutateAsync({
+					data: {
+						text: todo.text,
+						dueDate: todo.dueDate?.toISOString(),
+					},
+				}),
 			);
 
 			// Wait for all todos to be synced, then clear local storage and refetch
@@ -211,16 +218,39 @@ export function useTodos() {
 
 			saveToHistory(previousTodos);
 
-			const optimisticTodos = previousTodos.map((todo) =>
-				todo.id === updateData.id ? { ...todo, ...updateData } : todo,
-			);
+			const optimisticTodos = previousTodos.map((todo) => {
+				if (todo.id === updateData.id) {
+					const updatedTodo = { ...todo };
+
+					// Handle specific fields properly
+					if ("completed" in updateData && updateData.completed !== undefined) {
+						updatedTodo.completed = updateData.completed;
+					}
+					if ("dueDate" in updateData) {
+						// Convert string to Date or null
+						updatedTodo.dueDate = updateData.dueDate
+							? new Date(updateData.dueDate)
+							: null;
+					}
+
+					return updatedTodo;
+				}
+				return todo;
+			});
 
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
 			return { previousTodos };
 		},
-		onSuccess: () => {
-			// Invalidate and refetch to ensure consistency with server state
-			queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
+		onSuccess: (updatedTodo, _, context) => {
+			if (context && isAuthenticated) {
+				// Update the cache with the returned data instead of refetching
+				const currentTodos =
+					queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || [];
+				const updatedTodos = currentTodos.map((todo) =>
+					todo.id === updatedTodo.id ? updatedTodo : todo,
+				);
+				queryClient.setQueryData(TODOS_QUERY_KEY, updatedTodos);
+			}
 		},
 		onError: (_, __, context) => {
 			if (context?.previousTodos && isAuthenticated) {
@@ -286,7 +316,7 @@ export function useTodos() {
 	});
 
 	const addTodo = useCallback(
-		async (text: string, position?: "below" | "above") => {
+		async (text: string, position?: "below" | "above", dueDate?: Date) => {
 			const currentTodos = isAuthenticated
 				? queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || []
 				: localTodos;
@@ -296,6 +326,7 @@ export function useTodos() {
 				id: `temp-${nanoid()}`,
 				text,
 				completed: false,
+				dueDate,
 				created: new Date(),
 			};
 
@@ -317,13 +348,18 @@ export function useTodos() {
 				];
 				newSelectedIndex = selectedIndex + 1;
 			} else {
-				optimisticTodos = [tempTodo, ...currentTodos];
-				newSelectedIndex = 0;
+				optimisticTodos = [...currentTodos, tempTodo];
+				newSelectedIndex = currentTodos.length;
 			}
 
 			if (isAuthenticated) {
 				queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-				createTodoMutation.mutate({ data: text });
+				createTodoMutation.mutate({
+					data: {
+						text,
+						dueDate: dueDate?.toISOString(),
+					},
+				});
 			} else {
 				setLocalTodos(optimisticTodos);
 			}
@@ -437,6 +473,7 @@ export function useTodos() {
 			id: `temp-${nanoid()}`,
 			text: clipboardRef.current.text,
 			completed: false,
+			dueDate: clipboardRef.current.dueDate,
 			created: new Date(),
 		};
 
@@ -448,7 +485,12 @@ export function useTodos() {
 
 		if (isAuthenticated) {
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-			createTodoMutation.mutate({ data: clipboardRef.current.text });
+			createTodoMutation.mutate({
+				data: {
+					text: clipboardRef.current.text,
+					dueDate: clipboardRef.current.dueDate?.toISOString(),
+				},
+			});
 		} else {
 			setLocalTodos(optimisticTodos);
 		}
@@ -472,6 +514,7 @@ export function useTodos() {
 			id: `temp-${nanoid()}`,
 			text: clipboardRef.current.text,
 			completed: false,
+			dueDate: clipboardRef.current.dueDate,
 			created: new Date(),
 		};
 
@@ -483,7 +526,12 @@ export function useTodos() {
 
 		if (isAuthenticated) {
 			queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
-			createTodoMutation.mutate({ data: clipboardRef.current.text });
+			createTodoMutation.mutate({
+				data: {
+					text: clipboardRef.current.text,
+					dueDate: clipboardRef.current.dueDate?.toISOString(),
+				},
+			});
 		} else {
 			setLocalTodos(optimisticTodos);
 		}
@@ -519,6 +567,28 @@ export function useTodos() {
 			setHistoryIndex((prev) => prev + 1);
 		}
 	}, [history, historyIndex, queryClient, isAuthenticated, setLocalTodos]);
+
+	const updateDueDate = useCallback(
+		async (index: number, dueDate: Date | null) => {
+			const todo = todos[index];
+			if (!todo) return;
+
+			if (isAuthenticated) {
+				updateTodoMutation.mutate({
+					data: {
+						id: todo.id,
+						dueDate: dueDate ? dueDate.toISOString() : null,
+					},
+				});
+			} else {
+				const updatedTodos = localTodos.map((t, i) =>
+					i === index ? { ...t, dueDate } : t,
+				);
+				setLocalTodos(updatedTodos);
+			}
+		},
+		[updateTodoMutation, todos, isAuthenticated, localTodos, setLocalTodos],
+	);
 
 	const selectAll = useCallback(async () => {
 		if (todos.length === 0) return;
@@ -572,6 +642,7 @@ export function useTodos() {
 		addTodo,
 		deleteTodo: deleteTodoById,
 		toggleTodo,
+		updateDueDate,
 		moveSelection,
 		goToTop,
 		goToBottom,

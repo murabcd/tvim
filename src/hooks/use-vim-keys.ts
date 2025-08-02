@@ -27,6 +27,8 @@ interface UseVimKeysProps {
 	onHelp: () => void;
 	onSortNewest: () => void;
 	onSortOldest: () => void;
+	onSortDueDate: () => void;
+	onSortDueDateReverse: () => void;
 	onToggleSort: () => void;
 }
 
@@ -57,6 +59,8 @@ export function useVimKeys({
 	onHelp,
 	onSortNewest,
 	onSortOldest,
+	onSortDueDate,
+	onSortDueDateReverse,
 	onToggleSort,
 }: UseVimKeysProps) {
 	// === MODE SWITCHING ===
@@ -229,4 +233,12 @@ export function useVimKeys({
 		preventDefault: true,
 		enabled: mode === "normal",
 	}); // 2 - sort oldest first
+	useHotkeys("3", onSortDueDate, {
+		preventDefault: true,
+		enabled: mode === "normal",
+	}); // 3 - sort by due date (earliest first)
+	useHotkeys("4", onSortDueDateReverse, {
+		preventDefault: true,
+		enabled: mode === "normal",
+	}); // 4 - sort by due date (latest first)
 }

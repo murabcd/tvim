@@ -8,6 +8,7 @@ import {
 	ScriptOnce,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NotFound } from "@/components/not-found";
 
 import appCss from "@/styles/app.css?url";
 
@@ -43,6 +44,7 @@ export const Route = createRootRoute({
 		],
 	}),
 	component: RootComponent,
+	notFoundComponent: NotFound,
 });
 
 function RootComponent() {

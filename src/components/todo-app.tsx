@@ -4,6 +4,7 @@ import { useRouteContext } from "@tanstack/react-router";
 import { useTodos } from "@/hooks/use-todos";
 import { useVimKeys } from "@/hooks/use-vim-keys";
 import { useAuth } from "@/hooks/use-auth";
+import { parseDueDate } from "@/lib/utils";
 
 import type { Todo } from "@/lib/schema";
 
@@ -37,7 +38,7 @@ export function TodoApp() {
 	const [visualStart, setVisualStart] = useState<number>(0);
 	const [visualEnd, setVisualEnd] = useState<number>(0);
 	const [sortType, setSortType] = useState<
-		"none" | "date-newest" | "date-oldest"
+		"none" | "date-newest" | "date-oldest" | "due-date" | "due-date-reverse"
 	>("none");
 	const [helpOpen, setHelpOpen] = useState(false);
 	const [editingTodoIndex, setEditingTodoIndex] = useState<number | null>(null);
@@ -62,6 +63,7 @@ export function TodoApp() {
 		toggleTodo,
 		deleteTodo,
 		addTodo,
+		updateDueDate,
 		goToTop,
 		goToBottom,
 		yankTodo,
@@ -152,6 +154,32 @@ export function TodoApp() {
 			const text = commandValue.slice(4).trim();
 			if (text) {
 				addTodo(text);
+			}
+		} else if (commandValue.startsWith("due ")) {
+			const parts = commandValue.slice(4).trim().split(" ");
+			if (parts.length >= 2) {
+				const datePart = parts[0];
+				const text = parts.slice(1).join(" ");
+				const dueDate = parseDueDate(datePart);
+
+				if (dueDate && text) {
+					addTodo(text, undefined, dueDate);
+				}
+			}
+		} else if (commandValue.startsWith("set-due ")) {
+			const dateString = commandValue.slice(8).trim();
+			const dueDate = parseDueDate(dateString);
+
+			if (
+				dueDate !== null &&
+				state.todos.length > 0 &&
+				state.selectedIndex >= 0
+			) {
+				updateDueDate(state.selectedIndex, dueDate);
+			}
+		} else if (commandValue === "remove-due") {
+			if (state.todos.length > 0 && state.selectedIndex >= 0) {
+				updateDueDate(state.selectedIndex, null);
 			}
 		} else if (commandValue === "help" || commandValue === "h") {
 			setHelpOpen(true);
@@ -269,6 +297,10 @@ export function TodoApp() {
 				return "Newest first";
 			case "date-oldest":
 				return "Oldest first";
+			case "due-date":
+				return "Due date (earliest)";
+			case "due-date-reverse":
+				return "Due date (latest)";
 			default:
 				return "Sort";
 		}
@@ -276,8 +308,19 @@ export function TodoApp() {
 
 	const handleSortNewest = () => setSortType("date-newest");
 	const handleSortOldest = () => setSortType("date-oldest");
+	const handleSortDueDate = () => setSortType("due-date");
+	const handleSortDueDateReverse = () => setSortType("due-date-reverse");
 	const handleToggleSort = () => {
-		setSortType(sortType === "date-newest" ? "date-oldest" : "date-newest");
+		const sortOrder = [
+			"none",
+			"date-newest",
+			"date-oldest",
+			"due-date",
+			"due-date-reverse",
+		];
+		const currentIndex = sortOrder.indexOf(sortType);
+		const nextIndex = (currentIndex + 1) % sortOrder.length;
+		setSortType(sortOrder[nextIndex] as any);
 	};
 
 	useVimKeys({
@@ -317,6 +360,8 @@ export function TodoApp() {
 		onHelp: () => setHelpOpen(true),
 		onSortNewest: handleSortNewest,
 		onSortOldest: handleSortOldest,
+		onSortDueDate: handleSortDueDate,
+		onSortDueDateReverse: handleSortDueDateReverse,
 		onToggleSort: handleToggleSort,
 	});
 
@@ -396,6 +441,24 @@ export function TodoApp() {
 										<span>Date: Oldest first</span>
 										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
 											2
+										</kbd>
+									</div>
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => setSortType("due-date")}>
+									<div className="flex items-center justify-between w-full">
+										<span>Due date: Earliest first</span>
+										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
+											3
+										</kbd>
+									</div>
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => setSortType("due-date-reverse")}
+								>
+									<div className="flex items-center justify-between w-full">
+										<span>Due date: Latest first</span>
+										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
+											4
 										</kbd>
 									</div>
 								</DropdownMenuItem>

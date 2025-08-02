@@ -152,9 +152,92 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 							</div>
 							<div>
 								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									:due &lt;date&gt; &lt;text&gt;
+								</kbd>{" "}
+								- Add todo with due date
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									:set-due &lt;date&gt;
+								</kbd>{" "}
+								- Set due date for selected todo
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									:remove-due
+								</kbd>{" "}
+								- Remove due date from selected todo
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
 									:help
 								</kbd>{" "}
 								- Show this help
+							</div>
+						</div>
+					</div>
+
+					<div>
+						<h3 className="font-semibold text-foreground mb-2">
+							Due Date Formats
+						</h3>
+						<div className="space-y-2 text-muted-foreground">
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									today
+								</kbd>{" "}
+								/{" "}
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									tomorrow
+								</kbd>{" "}
+								/{" "}
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									next week
+								</kbd>
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									monday
+								</kbd>{" "}
+								/{" "}
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">fri</kbd>{" "}
+								/{" "}
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">sun</kbd>
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									2024-01-15
+								</kbd>{" "}
+								/{" "}
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+									01/15/2024
+								</kbd>
+							</div>
+						</div>
+					</div>
+
+					<div>
+						<h3 className="font-semibold text-foreground mb-2">Sorting</h3>
+						<div className="space-y-2 text-muted-foreground">
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">s</kbd> -
+								Toggle sort
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">1</kbd> -
+								Sort by newest first
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">2</kbd> -
+								Sort by oldest first
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">3</kbd> -
+								Sort by due date (earliest)
+							</div>
+							<div>
+								<kbd className="px-1 py-0.5 bg-muted rounded text-xs">4</kbd> -
+								Sort by due date (latest)
 							</div>
 						</div>
 					</div>

@@ -9,13 +9,14 @@ export const getAllTodos = createServerFn().handler(async () => {
 	try {
 		// For now, return all todos since we're handling user-specific filtering on the client side
 		// This allows the app to work with local storage when not authenticated
-		const result = await db.select().from(todos).orderBy(desc(todos.created));
+		const result = await db.select().from(todos);
 
 		return result.map((todo) => ({
 			id: todo.id,
 			userId: todo.userId,
 			text: todo.text,
 			completed: todo.completed,
+			dueDate: todo.dueDate,
 			created: todo.created,
 		}));
 	} catch (error) {
@@ -25,8 +26,8 @@ export const getAllTodos = createServerFn().handler(async () => {
 });
 
 export const createTodo = createServerFn()
-	.validator((text: string) => text)
-	.handler(async ({ data: text }) => {
+	.validator((data: { text: string; dueDate?: string }) => data)
+	.handler(async ({ data }) => {
 		try {
 			// Create todo without user_id for now
 			// User-specific filtering will be handled on the client side
@@ -34,8 +35,9 @@ export const createTodo = createServerFn()
 				.insert(todos)
 				.values({
 					id: nanoid(),
-					text: text.trim(),
+					text: data.text.trim(),
 					completed: false,
+					dueDate: data.dueDate ? new Date(data.dueDate) : null,
 				})
 				.returning();
 
@@ -44,6 +46,7 @@ export const createTodo = createServerFn()
 				userId: newTodo.userId,
 				text: newTodo.text,
 				completed: newTodo.completed,
+				dueDate: newTodo.dueDate,
 				created: newTodo.created,
 			};
 		} catch (error) {
@@ -53,16 +56,40 @@ export const createTodo = createServerFn()
 	});
 
 export const updateTodo = createServerFn()
-	.validator((data: { id: string; completed: boolean }) => data)
+	.validator(
+		(data: { id: string; completed?: boolean; dueDate?: string | null }) =>
+			data,
+	)
 	.handler(async ({ data }) => {
 		try {
-			await db
+			const updateData: any = {
+				updated: new Date(),
+			};
+
+			if (data.completed !== undefined) {
+				updateData.completed = data.completed;
+			}
+
+			if ("dueDate" in data) {
+				updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+			}
+
+			const [updatedTodo] = await db
 				.update(todos)
-				.set({
-					completed: data.completed,
-					updated: new Date(),
-				})
-				.where(eq(todos.id, data.id));
+				.set(updateData)
+				.where(eq(todos.id, data.id))
+				.returning();
+
+			const result = {
+				id: updatedTodo.id,
+				userId: updatedTodo.userId,
+				text: updatedTodo.text,
+				completed: updatedTodo.completed,
+				dueDate: updatedTodo.dueDate,
+				created: updatedTodo.created,
+			};
+
+			return result;
 		} catch (error) {
 			console.error("Error updating todo:", error);
 			throw error;

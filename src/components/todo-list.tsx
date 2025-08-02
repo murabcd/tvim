@@ -1,12 +1,19 @@
 import type { Todo } from "@/lib/schema";
+import { formatDueDate, isOverdue, isDueToday } from "@/lib/utils";
 
-import { Check, Circle } from "lucide-react";
+import { Check, Circle, Calendar, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface TodoListProps {
 	todos: Todo[];
 	selectedIndex: number;
 	visualSelection?: { start: number; end: number };
-	sortType?: "none" | "date-newest" | "date-oldest";
+	sortType?:
+		| "none"
+		| "date-newest"
+		| "date-oldest"
+		| "due-date"
+		| "due-date-reverse";
 }
 
 export function TodoList({
@@ -77,6 +84,44 @@ export function TodoList({
 
 					return dateA - dateB; // Oldest first
 				});
+			case "due-date":
+				return sorted.sort((a, b) => {
+					// Todos without due dates go to the end
+					if (!a.dueDate && !b.dueDate) {
+						return a.id.localeCompare(b.id);
+					}
+					if (!a.dueDate) return 1;
+					if (!b.dueDate) return -1;
+
+					const dateA = new Date(a.dueDate).getTime();
+					const dateB = new Date(b.dueDate).getTime();
+
+					// If due dates are the same, sort by ID to maintain consistent order
+					if (dateA === dateB) {
+						return a.id.localeCompare(b.id);
+					}
+
+					return dateA - dateB; // Earliest due date first
+				});
+			case "due-date-reverse":
+				return sorted.sort((a, b) => {
+					// Todos without due dates go to the end
+					if (!a.dueDate && !b.dueDate) {
+						return a.id.localeCompare(b.id);
+					}
+					if (!a.dueDate) return 1;
+					if (!b.dueDate) return -1;
+
+					const dateA = new Date(a.dueDate).getTime();
+					const dateB = new Date(b.dueDate).getTime();
+
+					// If due dates are the same, sort by ID to maintain consistent order
+					if (dateA === dateB) {
+						return a.id.localeCompare(b.id);
+					}
+
+					return dateB - dateA; // Latest due date first
+				});
 			default:
 				return todos;
 		}
@@ -87,6 +132,32 @@ export function TodoList({
 	const sortedSelectedIndex = sortedTodos.findIndex(
 		(todo) => todo.id === selectedTodo?.id,
 	);
+
+	const getDueDateBadge = (todo: Todo) => {
+		if (!todo.dueDate) return null;
+
+		const dueDate = new Date(todo.dueDate);
+		const isOverdueTodo = isOverdue(dueDate);
+		const isDueTodayTodo = isDueToday(dueDate);
+
+		let variant: "default" | "secondary" | "destructive" | "outline" =
+			"default";
+		let icon = <Calendar className="w-3 h-3" />;
+
+		if (isOverdueTodo) {
+			variant = "destructive";
+			icon = <AlertTriangle className="w-3 h-3" />;
+		} else if (isDueTodayTodo) {
+			variant = "secondary";
+		}
+
+		return (
+			<Badge variant={variant} className="text-xs gap-1">
+				{icon}
+				{formatDueDate(dueDate)}
+			</Badge>
+		);
+	};
 
 	return (
 		<div className="divide-y divide-border">
@@ -126,10 +197,13 @@ export function TodoList({
 							{todo.text}
 						</div>
 
-						<div className="text-xs text-muted-foreground">
-							{sortType === "date-newest" || sortType === "date-oldest"
-								? new Date(todo.created).toLocaleString()
-								: new Date(todo.created).toLocaleDateString()}
+						<div className="flex items-center gap-2">
+							{getDueDateBadge(todo)}
+							<div className="text-xs text-muted-foreground">
+								{sortType === "date-newest" || sortType === "date-oldest"
+									? new Date(todo.created).toLocaleString()
+									: new Date(todo.created).toLocaleDateString()}
+							</div>
 						</div>
 					</div>
 				);

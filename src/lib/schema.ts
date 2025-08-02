@@ -8,6 +8,7 @@ export const todos = pgTable(
 		userId: text("user_id"),
 		text: text("text").notNull(),
 		completed: boolean("completed").default(false).notNull(),
+		dueDate: timestamp("due_date"),
 		created: timestamp("created").defaultNow().notNull(),
 		updated: timestamp("updated").defaultNow().notNull(),
 	},
@@ -21,6 +22,7 @@ export interface Todo {
 	userId?: string;
 	text: string;
 	completed: boolean;
+	dueDate?: Date | null;
 	created: Date;
 }
 
