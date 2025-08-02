@@ -1,4 +1,8 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useSearch,
+} from "@tanstack/react-router";
 import { useState } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,7 +18,9 @@ export const Route = createFileRoute("/auth")({
 function Auth() {
 	const navigate = useNavigate();
 	const { mode, redirect } = useSearch({ from: "/auth" });
-	const [currentMode, setCurrentMode] = useState<"login" | "register">(mode);
+	const [currentMode, setCurrentMode] = useState<"login" | "register">(
+		mode as "login" | "register",
+	);
 	const { isAuthenticated, isLoading } = useAuth();
 
 	// Redirect if already authenticated
@@ -48,8 +54,8 @@ function Auth() {
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
 			<div className="max-w-md w-full">
-				<AuthForm 
-					mode={currentMode} 
+				<AuthForm
+					mode={currentMode}
 					onSuccess={handleAuthSuccess}
 					onToggleMode={toggleMode}
 				/>

@@ -1,7 +1,7 @@
 import type { Todo } from "@/lib/schema";
-import { formatDueDate, isOverdue, isDueToday } from "@/lib/utils";
+import { formatDueDate, isOverdue, isDueToday, parseTags } from "@/lib/utils";
 
-import { Check, Circle, Calendar, AlertTriangle } from "lucide-react";
+import { Check, Circle, Calendar, AlertTriangle, Tag, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface TodoListProps {
@@ -14,6 +14,7 @@ interface TodoListProps {
 		| "date-oldest"
 		| "due-date"
 		| "due-date-reverse";
+	onRemoveTag?: (todoIndex: number, tag: string) => void;
 }
 
 export function TodoList({
@@ -21,6 +22,7 @@ export function TodoList({
 	selectedIndex,
 	visualSelection,
 	sortType = "none",
+	onRemoveTag,
 }: TodoListProps) {
 	if (todos.length === 0) {
 		return (
@@ -159,6 +161,28 @@ export function TodoList({
 		);
 	};
 
+	const getTagsBadges = (todo: Todo, onRemoveTag?: (tag: string) => void) => {
+		const tags = parseTags(todo.tags);
+		if (tags.length === 0) return null;
+
+		return (
+			<div className="flex items-center gap-1">
+				<Tag className="w-3 h-3 text-muted-foreground" />
+				{tags.map((tag) => (
+					<Badge
+						key={tag}
+						variant="outline"
+						className="text-xs cursor-pointer hover:bg-destructive/10 hover:text-destructive"
+						onClick={() => onRemoveTag?.(tag)}
+					>
+						{tag}
+						{onRemoveTag && <X className="w-3 h-3 ml-1" />}
+					</Badge>
+				))}
+			</div>
+		);
+	};
+
 	return (
 		<div className="divide-y divide-border">
 			{sortedTodos.map((todo, index) => {
@@ -198,6 +222,10 @@ export function TodoList({
 						</div>
 
 						<div className="flex items-center gap-2">
+							{getTagsBadges(
+								todo,
+								onRemoveTag ? (tag) => onRemoveTag(index, tag) : undefined,
+							)}
 							{getDueDateBadge(todo)}
 							<div className="text-xs text-muted-foreground">
 								{sortType === "date-newest" || sortType === "date-oldest"

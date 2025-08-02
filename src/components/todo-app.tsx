@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { TodoList } from "@/components/todo-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, ChevronDown } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Eye, EyeOff, Tag, X } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { HelpModal } from "@/components/help-modal";
 import { DeleteTodoDialog } from "@/components/delete-todo-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface RouteContext {
 	todos: Todo[];
@@ -64,6 +65,7 @@ export function TodoApp() {
 		deleteTodo,
 		addTodo,
 		updateDueDate,
+		updateTodoTags,
 		goToTop,
 		goToBottom,
 		yankTodo,
@@ -72,6 +74,10 @@ export function TodoApp() {
 		undo,
 		redo,
 		selectAll,
+		showCompleted,
+		setShowCompleted,
+		filterTags,
+		setFilterTags,
 		initializeTodos,
 	} = useTodos();
 
@@ -181,6 +187,48 @@ export function TodoApp() {
 			if (state.todos.length > 0 && state.selectedIndex >= 0) {
 				updateDueDate(state.selectedIndex, null);
 			}
+		} else if (commandValue.startsWith("tag ")) {
+			const tag = commandValue.slice(4).trim();
+			if (tag && state.todos.length > 0 && state.selectedIndex >= 0) {
+				const currentTodo = state.todos[state.selectedIndex];
+				const currentTags = currentTodo.tags
+					? currentTodo.tags.split(",").map((t) => t.trim())
+					: [];
+				if (!currentTags.includes(tag)) {
+					updateTodoTags(state.selectedIndex, [...currentTags, tag]);
+				}
+			}
+		} else if (commandValue.startsWith("untag ")) {
+			const tag = commandValue.slice(6).trim();
+			if (tag && state.todos.length > 0 && state.selectedIndex >= 0) {
+				const currentTodo = state.todos[state.selectedIndex];
+				const currentTags = currentTodo.tags
+					? currentTodo.tags.split(",").map((t) => t.trim())
+					: [];
+				const updatedTags = currentTags.filter((t) => t !== tag);
+				updateTodoTags(state.selectedIndex, updatedTags);
+			}
+		} else if (commandValue.startsWith("filter ")) {
+			const tag = commandValue.slice(7).trim();
+			if (tag) {
+				setFilterTags([tag]);
+			} else {
+				setFilterTags([]);
+			}
+		} else if (commandValue === "clear-filter") {
+			setFilterTags([]);
+		} else if (commandValue === "toggle-completed") {
+			setShowCompleted(!showCompleted);
+		} else if (commandValue === "sort-newest") {
+			setSortType("date-newest");
+		} else if (commandValue === "sort-oldest") {
+			setSortType("date-oldest");
+		} else if (commandValue === "sort-due-earliest") {
+			setSortType("due-date");
+		} else if (commandValue === "sort-due-latest") {
+			setSortType("due-date-reverse");
+		} else if (commandValue === "sort-none") {
+			setSortType("none");
 		} else if (commandValue === "help" || commandValue === "h") {
 			setHelpOpen(true);
 			setCommandValue("");
@@ -358,11 +406,6 @@ export function TodoApp() {
 		onVisualToggle: handleVisualToggle,
 		onVisualDelete: handleVisualDelete,
 		onHelp: () => setHelpOpen(true),
-		onSortNewest: handleSortNewest,
-		onSortOldest: handleSortOldest,
-		onSortDueDate: handleSortDueDate,
-		onSortDueDateReverse: handleSortDueDateReverse,
-		onToggleSort: handleToggleSort,
 	});
 
 	return (
@@ -414,7 +457,51 @@ export function TodoApp() {
 				</div>
 
 				{state.todos.length > 0 && (
-					<div className="flex justify-end mb-4">
+					<div className="flex justify-between items-center mb-4">
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => setShowCompleted(!showCompleted)}
+								className="flex items-center gap-2"
+							>
+								{showCompleted ? (
+									<Eye className="w-4 h-4" />
+								) : (
+									<EyeOff className="w-4 h-4" />
+								)}
+								{showCompleted ? "Show completed" : "Hide completed"}
+							</Button>
+
+							{filterTags.length > 0 && (
+								<div className="flex items-center gap-1">
+									<Tag className="w-4 h-4 text-muted-foreground" />
+									{filterTags.map((tag) => (
+										<Badge key={tag} variant="secondary" className="text-xs">
+											{tag}
+											<button
+												type="button"
+												onClick={() =>
+													setFilterTags(filterTags.filter((t) => t !== tag))
+												}
+												className="ml-1 hover:text-destructive"
+											>
+												<X className="w-3 h-3" />
+											</button>
+										</Badge>
+									))}
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setFilterTags([])}
+										className="text-xs text-muted-foreground hover:text-foreground"
+									>
+										Clear
+									</Button>
+								</div>
+							)}
+						</div>
+
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button
@@ -429,38 +516,18 @@ export function TodoApp() {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
 								<DropdownMenuItem onClick={() => setSortType("date-newest")}>
-									<div className="flex items-center justify-between w-full">
-										<span>Date: Newest first</span>
-										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
-											1
-										</kbd>
-									</div>
+									Date: Newest first
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => setSortType("date-oldest")}>
-									<div className="flex items-center justify-between w-full">
-										<span>Date: Oldest first</span>
-										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
-											2
-										</kbd>
-									</div>
+									Date: Oldest first
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => setSortType("due-date")}>
-									<div className="flex items-center justify-between w-full">
-										<span>Due date: Earliest first</span>
-										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
-											3
-										</kbd>
-									</div>
+									Due date: Earliest first
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() => setSortType("due-date-reverse")}
 								>
-									<div className="flex items-center justify-between w-full">
-										<span>Due date: Latest first</span>
-										<kbd className="ml-2 px-1.5 py-0.5 bg-muted rounded text-xs">
-											4
-										</kbd>
-									</div>
+									Due date: Latest first
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -492,6 +559,16 @@ export function TodoApp() {
 								mode === "visual" ? getVisualSelection() : undefined
 							}
 							sortType={sortType}
+							onRemoveTag={(todoIndex, tag) => {
+								const todo = state.todos[todoIndex];
+								if (todo) {
+									const currentTags = todo.tags
+										? todo.tags.split(",").map((t) => t.trim())
+										: [];
+									const updatedTags = currentTags.filter((t) => t !== tag);
+									updateTodoTags(todoIndex, updatedTags);
+								}
+							}}
 						/>
 					)}
 

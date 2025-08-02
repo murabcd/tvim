@@ -9,6 +9,7 @@ export const todos = pgTable(
 		text: text("text").notNull(),
 		completed: boolean("completed").default(false).notNull(),
 		dueDate: timestamp("due_date"),
+		tags: text("tags"), // Comma-separated tags
 		created: timestamp("created").defaultNow().notNull(),
 		updated: timestamp("updated").defaultNow().notNull(),
 	},
@@ -23,6 +24,7 @@ export interface Todo {
 	text: string;
 	completed: boolean;
 	dueDate?: Date | null;
+	tags?: string;
 	created: Date;
 }
 

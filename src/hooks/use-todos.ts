@@ -5,6 +5,7 @@ import { useLocalStorage } from "usehooks-ts";
 
 import type { Todo, AppState } from "@/lib/schema";
 import { useAuth } from "@/hooks/use-auth";
+import { extractTagsFromText, parseTags, formatTags } from "@/lib/utils";
 
 import {
 	getAllTodos,
@@ -25,6 +26,8 @@ export function useTodos() {
 	const [historyIndex, setHistoryIndex] = useState(-1);
 	const clipboardRef = useRef<Todo | null>(null);
 	const hasSyncedRef = useRef(false);
+	const [showCompleted, setShowCompleted] = useState(true);
+	const [filterTags, setFilterTags] = useState<string[]>([]);
 
 	// Use usehooks-ts useLocalStorage for better localStorage management
 	const [localTodos, setLocalTodos] = useLocalStorage<Todo[]>(
@@ -56,7 +59,7 @@ export function useTodos() {
 
 	// Use local todos when not authenticated, server todos when authenticated
 	// Show local todos optimistically while auth is loading
-	const todos = authLoading
+	const allTodos = authLoading
 		? localTodos
 		: isAuthenticated
 			? serverTodos.map((todo) => ({
@@ -65,6 +68,29 @@ export function useTodos() {
 					dueDate: todo.dueDate || undefined,
 				}))
 			: localTodos;
+
+	// Filter todos based on completion status and tags
+	const todos = allTodos.filter((todo) => {
+		// Filter by completion status
+		if (!showCompleted && todo.completed) {
+			return false;
+		}
+
+		// Filter by tags
+		if (filterTags.length > 0) {
+			const todoTags = parseTags(todo.tags);
+			const hasMatchingTag = filterTags.some((filterTag) =>
+				todoTags.some(
+					(todoTag) => todoTag.toLowerCase() === filterTag.toLowerCase(),
+				),
+			);
+			if (!hasMatchingTag) {
+				return false;
+			}
+		}
+
+		return true;
+	});
 
 	// Show loading state while auth is loading or query is loading
 	const isLoading = authLoading || (isAuthenticated && queryLoading);
@@ -321,12 +347,16 @@ export function useTodos() {
 				? queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || []
 				: localTodos;
 
+			// Extract tags from text
+			const { text: cleanText, tags } = extractTagsFromText(text);
+
 			// Create temporary todo for optimistic update
 			const tempTodo: Todo = {
 				id: `temp-${nanoid()}`,
-				text,
+				text: cleanText,
 				completed: false,
 				dueDate,
+				tags: formatTags(tags),
 				created: new Date(),
 			};
 
@@ -356,8 +386,9 @@ export function useTodos() {
 				queryClient.setQueryData(TODOS_QUERY_KEY, optimisticTodos);
 				createTodoMutation.mutate({
 					data: {
-						text,
+						text: cleanText,
 						dueDate: dueDate?.toISOString(),
+						tags: formatTags(tags),
 					},
 				});
 			} else {
@@ -590,6 +621,28 @@ export function useTodos() {
 		[updateTodoMutation, todos, isAuthenticated, localTodos, setLocalTodos],
 	);
 
+	const updateTodoTags = useCallback(
+		async (index: number, tags: string[]) => {
+			const todo = todos[index];
+			if (!todo) return;
+
+			if (isAuthenticated) {
+				updateTodoMutation.mutate({
+					data: {
+						id: todo.id,
+						tags: formatTags(tags),
+					},
+				});
+			} else {
+				const updatedTodos = localTodos.map((t, i) =>
+					i === index ? { ...t, tags: formatTags(tags) } : t,
+				);
+				setLocalTodos(updatedTodos);
+			}
+		},
+		[updateTodoMutation, todos, isAuthenticated, localTodos, setLocalTodos],
+	);
+
 	const selectAll = useCallback(async () => {
 		if (todos.length === 0) return;
 
@@ -643,6 +696,7 @@ export function useTodos() {
 		deleteTodo: deleteTodoById,
 		toggleTodo,
 		updateDueDate,
+		updateTodoTags,
 		moveSelection,
 		goToTop,
 		goToBottom,
@@ -655,6 +709,10 @@ export function useTodos() {
 		undo,
 		redo,
 		selectAll,
+		showCompleted,
+		setShowCompleted,
+		filterTags,
+		setFilterTags,
 		isAuthenticated,
 	};
 }

@@ -1,15 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { nanoid } from "nanoid";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { todos } from "@/lib/schema";
 
 export const getAllTodos = createServerFn().handler(async () => {
 	try {
-		// For now, return all todos since we're handling user-specific filtering on the client side
-		// This allows the app to work with local storage when not authenticated
-		const result = await db.select().from(todos);
+		// Return todos ordered by creation date (oldest first) so new todos stay at the bottom by default
+		const result = await db.select().from(todos).orderBy(asc(todos.created));
 
 		return result.map((todo) => ({
 			id: todo.id,
@@ -17,6 +16,7 @@ export const getAllTodos = createServerFn().handler(async () => {
 			text: todo.text,
 			completed: todo.completed,
 			dueDate: todo.dueDate,
+			tags: todo.tags,
 			created: todo.created,
 		}));
 	} catch (error) {
@@ -26,7 +26,7 @@ export const getAllTodos = createServerFn().handler(async () => {
 });
 
 export const createTodo = createServerFn()
-	.validator((data: { text: string; dueDate?: string }) => data)
+	.validator((data: { text: string; dueDate?: string; tags?: string }) => data)
 	.handler(async ({ data }) => {
 		try {
 			// Create todo without user_id for now
@@ -38,6 +38,7 @@ export const createTodo = createServerFn()
 					text: data.text.trim(),
 					completed: false,
 					dueDate: data.dueDate ? new Date(data.dueDate) : null,
+					tags: data.tags,
 				})
 				.returning();
 
@@ -47,6 +48,7 @@ export const createTodo = createServerFn()
 				text: newTodo.text,
 				completed: newTodo.completed,
 				dueDate: newTodo.dueDate,
+				tags: newTodo.tags,
 				created: newTodo.created,
 			};
 		} catch (error) {
@@ -57,8 +59,12 @@ export const createTodo = createServerFn()
 
 export const updateTodo = createServerFn()
 	.validator(
-		(data: { id: string; completed?: boolean; dueDate?: string | null }) =>
-			data,
+		(data: {
+			id: string;
+			completed?: boolean;
+			dueDate?: string | null;
+			tags?: string;
+		}) => data,
 	)
 	.handler(async ({ data }) => {
 		try {
@@ -74,6 +80,10 @@ export const updateTodo = createServerFn()
 				updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
 			}
 
+			if ("tags" in data) {
+				updateData.tags = data.tags;
+			}
+
 			const [updatedTodo] = await db
 				.update(todos)
 				.set(updateData)
@@ -86,6 +96,7 @@ export const updateTodo = createServerFn()
 				text: updatedTodo.text,
 				completed: updatedTodo.completed,
 				dueDate: updatedTodo.dueDate,
+				tags: updatedTodo.tags,
 				created: updatedTodo.created,
 			};
 

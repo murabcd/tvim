@@ -104,3 +104,45 @@ export function isOverdue(date: Date): boolean {
 export function isDueToday(date: Date): boolean {
 	return isToday(date);
 }
+
+export function parseTags(tagsString?: string): string[] {
+	if (!tagsString) return [];
+	return tagsString
+		.split(",")
+		.map((tag) => tag.trim())
+		.filter((tag) => tag.length > 0);
+}
+
+export function formatTags(tags: string[]): string {
+	return tags.join(", ");
+}
+
+export function extractTagsFromText(text: string): {
+	text: string;
+	tags: string[];
+} {
+	const tagRegex = /#(\w+)/g;
+	const tags: string[] = [];
+	const cleanText = text
+		.replace(tagRegex, (match, tag) => {
+			tags.push(tag);
+			return "";
+		})
+		.trim();
+
+	return { text: cleanText, tags };
+}
+
+export function hasMatchingTags(
+	todoTags: string[],
+	filterTags: string[],
+): boolean {
+	if (filterTags.length === 0) return true;
+	if (todoTags.length === 0) return false;
+
+	return filterTags.some((filterTag) =>
+		todoTags.some(
+			(todoTag) => todoTag.toLowerCase() === filterTag.toLowerCase(),
+		),
+	);
+}

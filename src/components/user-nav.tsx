@@ -1,4 +1,4 @@
-import { ChevronUp, Moon, Sun, LogOut } from "lucide-react";
+import { ChevronsUpDown, Moon, Sun, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -39,7 +39,7 @@ export function UserNav() {
 			<DropdownMenuTrigger asChild>
 				<button
 					type="button"
-					className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+					className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
 				>
 					<Avatar className="h-6 w-6 border">
 						<AvatarImage src={user.image} alt={user.name} />
@@ -48,7 +48,7 @@ export function UserNav() {
 						</AvatarFallback>
 					</Avatar>
 					<span className="truncate">{user.name ?? user.email}</span>
-					<ChevronUp className="h-4 w-4" />
+					<ChevronsUpDown className="h-4 w-4" />
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">
