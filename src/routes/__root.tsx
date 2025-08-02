@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NotFound } from "@/components/not-found";
+import { MobileAlert } from "@/components/mobile-alert";
 
 import appCss from "@/styles/app.css?url";
 
@@ -51,6 +52,7 @@ function RootComponent() {
 	return (
 		<QueryClientProvider client={queryClient}>
 			<RootDocument>
+				<MobileAlert />
 				<Outlet />
 			</RootDocument>
 		</QueryClientProvider>
