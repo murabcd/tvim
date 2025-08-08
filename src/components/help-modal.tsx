@@ -19,7 +19,10 @@ interface HelpModalProps {
 export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-2xl max-h-[100vh] overflow-y-auto">
+			<DialogContent
+				className="max-w-2xl max-h-[100vh] overflow-y-auto"
+				onOpenAutoFocus={(e) => e.preventDefault()}
+			>
 				<DialogHeader>
 					<DialogTitle>Help</DialogTitle>
 				</DialogHeader>
