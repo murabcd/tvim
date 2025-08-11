@@ -183,6 +183,29 @@ export function TodoList({
 		);
 	};
 
+	const renderTextWithLinks = (text: string) => {
+		const urlRegex = /(https?:\/\/[^\s]+)/g;
+		const parts = text.split(urlRegex);
+
+		return parts.map((part, _index) => {
+			if (urlRegex.test(part)) {
+				return (
+					<a
+						key={`link-${part}`}
+						href={part}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-blue-500 hover:text-blue-700 underline break-all"
+						onClick={(e) => e.stopPropagation()}
+					>
+						{part}
+					</a>
+				);
+			}
+			return part;
+		});
+	};
+
 	return (
 		<div className="divide-y divide-border">
 			{sortedTodos.map((todo, index) => {
@@ -218,7 +241,7 @@ export function TodoList({
 						<div
 							className={`flex-1 ${todo.completed ? "line-through text-muted-foreground" : ""}`}
 						>
-							{todo.text}
+							{renderTextWithLinks(todo.text)}
 						</div>
 
 						<div className="flex items-center gap-2">

@@ -124,7 +124,7 @@ export function extractTagsFromText(text: string): {
 	const tagRegex = /#(\w+)/g;
 	const tags: string[] = [];
 	const cleanText = text
-		.replace(tagRegex, (match, tag) => {
+		.replace(tagRegex, (_match, tag) => {
 			tags.push(tag);
 			return "";
 		})

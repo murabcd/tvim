@@ -7,12 +7,6 @@ interface User {
 	image?: string;
 }
 
-interface AuthState {
-	user: User | null;
-	isLoading: boolean;
-	isAuthenticated: boolean;
-}
-
 export function useAuth() {
 	const { data: session, isPending: isLoading } = useSession();
 

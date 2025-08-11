@@ -14,7 +14,7 @@ interface UseVimKeysProps {
 	onEscape: () => void;
 	onUndo: () => void;
 	onRedo: () => void;
-	onSelectAll: () => void;
+
 	onDeleteLine: () => void;
 	onYankTodo: () => void;
 	onPasteTodo: () => void;
@@ -41,7 +41,7 @@ export function useVimKeys({
 	onEscape,
 	onUndo,
 	onRedo,
-	onSelectAll,
+
 	onDeleteLine,
 	onYankTodo,
 	onPasteTodo,

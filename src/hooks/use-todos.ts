@@ -39,10 +39,12 @@ export function useTodos() {
 				try {
 					const todos = JSON.parse(value);
 					// Ensure created field is a Date object
-					return todos.map((todo: any) => ({
-						...todo,
-						created: new Date(todo.created),
-					}));
+					return todos.map(
+						(todo: { created: string | Date; [key: string]: unknown }) => ({
+							...todo,
+							created: new Date(todo.created),
+						}),
+					);
 				} catch {
 					return [];
 				}
@@ -66,6 +68,7 @@ export function useTodos() {
 					...todo,
 					userId: todo.userId || undefined,
 					dueDate: todo.dueDate || undefined,
+					tags: todo.tags ?? undefined,
 				}))
 			: localTodos;
 
@@ -78,7 +81,7 @@ export function useTodos() {
 
 		// Filter by tags
 		if (filterTags.length > 0) {
-			const todoTags = parseTags(todo.tags);
+			const todoTags = parseTags(todo.tags ?? undefined);
 			const hasMatchingTag = filterTags.some((filterTag) =>
 				todoTags.some(
 					(todoTag) => todoTag.toLowerCase() === filterTag.toLowerCase(),

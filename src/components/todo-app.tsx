@@ -73,7 +73,6 @@ export function TodoApp() {
 		pasteTodoAbove,
 		undo,
 		redo,
-		selectAll,
 		showCompleted,
 		setShowCompleted,
 		filterTags,
@@ -354,23 +353,6 @@ export function TodoApp() {
 		}
 	};
 
-	const handleSortNewest = () => setSortType("date-newest");
-	const handleSortOldest = () => setSortType("date-oldest");
-	const handleSortDueDate = () => setSortType("due-date");
-	const handleSortDueDateReverse = () => setSortType("due-date-reverse");
-	const handleToggleSort = () => {
-		const sortOrder = [
-			"none",
-			"date-newest",
-			"date-oldest",
-			"due-date",
-			"due-date-reverse",
-		];
-		const currentIndex = sortOrder.indexOf(sortType);
-		const nextIndex = (currentIndex + 1) % sortOrder.length;
-		setSortType(sortOrder[nextIndex] as any);
-	};
-
 	useVimKeys({
 		mode,
 		onMoveUp: () => moveSelection("up"),
@@ -395,7 +377,6 @@ export function TodoApp() {
 		},
 		onUndo: undo,
 		onRedo: redo,
-		onSelectAll: selectAll,
 		onDeleteLine: () => handleDeleteTodo(state.selectedIndex),
 		onYankTodo: yankTodo,
 		onPasteTodo: pasteTodo,

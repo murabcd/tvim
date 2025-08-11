@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { nanoid } from "nanoid";
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import { todos } from "@/lib/schema";
@@ -68,7 +68,12 @@ export const updateTodo = createServerFn()
 	)
 	.handler(async ({ data }) => {
 		try {
-			const updateData: any = {
+			const updateData: {
+				updated: Date;
+				completed?: boolean;
+				dueDate?: Date | null;
+				tags?: string;
+			} = {
 				updated: new Date(),
 			};
 

@@ -30,5 +30,13 @@
 				"organizeImports": "off"
 			}
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["**/routeTree.gen.ts"],
+			"linter": {
+				"enabled": false
+			}
+		}
+	]
 }
