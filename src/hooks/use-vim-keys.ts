@@ -22,8 +22,12 @@ interface UseVimKeysProps {
 	onVisualMode: () => void;
 	onVisualMoveUp: () => void;
 	onVisualMoveDown: () => void;
+	onVisualCursorUp: () => void;
+	onVisualCursorDown: () => void;
 	onVisualToggle: () => void;
 	onVisualDelete: () => void;
+	onVisualMoveUpDrag: () => void;
+	onVisualMoveDownDrag: () => void;
 	onHelp: () => void;
 }
 
@@ -49,8 +53,12 @@ export function useVimKeys({
 	onVisualMode,
 	onVisualMoveUp,
 	onVisualMoveDown,
+	onVisualCursorUp,
+	onVisualCursorDown,
 	onVisualToggle,
 	onVisualDelete,
+	onVisualMoveUpDrag,
+	onVisualMoveDownDrag,
 	onHelp,
 }: UseVimKeysProps) {
 	// === MODE SWITCHING ===
@@ -181,6 +189,14 @@ export function useVimKeys({
 		preventDefault: true,
 		enabled: mode === "visual",
 	});
+	useHotkeys("h", onVisualCursorUp, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	});
+	useHotkeys("l", onVisualCursorDown, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	});
 	useHotkeys("k", onVisualMoveUp, {
 		preventDefault: true,
 		enabled: mode === "visual",
@@ -199,6 +215,16 @@ export function useVimKeys({
 		preventDefault: true,
 		enabled: mode === "visual",
 	});
+
+	// Visual mode drag and drop
+	useHotkeys("shift+k", onVisualMoveUpDrag, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	}); // K - move selected todos up
+	useHotkeys("shift+j", onVisualMoveDownDrag, {
+		preventDefault: true,
+		enabled: mode === "visual",
+	}); // J - move selected todos down
 
 	// === HELP ===
 	useHotkeys("F1", onHelp, {

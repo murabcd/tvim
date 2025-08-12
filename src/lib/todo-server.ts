@@ -7,8 +7,11 @@ import { todos } from "@/lib/schema";
 
 export const getAllTodos = createServerFn().handler(async () => {
 	try {
-		// Return todos ordered by creation date (oldest first) so new todos stay at the bottom by default
-		const result = await db.select().from(todos).orderBy(asc(todos.created));
+		// Return todos ordered by order field first, then by creation date as fallback
+		const result = await db
+			.select()
+			.from(todos)
+			.orderBy(asc(todos.order), asc(todos.created));
 
 		return result.map((todo) => ({
 			id: todo.id,
@@ -17,6 +20,7 @@ export const getAllTodos = createServerFn().handler(async () => {
 			completed: todo.completed,
 			dueDate: todo.dueDate,
 			tags: todo.tags,
+			order: todo.order,
 			created: todo.created,
 		}));
 	} catch (error) {
@@ -26,7 +30,10 @@ export const getAllTodos = createServerFn().handler(async () => {
 });
 
 export const createTodo = createServerFn()
-	.validator((data: { text: string; dueDate?: string; tags?: string }) => data)
+	.validator(
+		(data: { text: string; dueDate?: string; tags?: string; order?: string }) =>
+			data,
+	)
 	.handler(async ({ data }) => {
 		try {
 			// Create todo without user_id for now
@@ -39,6 +46,7 @@ export const createTodo = createServerFn()
 					completed: false,
 					dueDate: data.dueDate ? new Date(data.dueDate) : null,
 					tags: data.tags,
+					order: data.order ? parseInt(data.order, 10) : null,
 				})
 				.returning();
 
@@ -49,6 +57,7 @@ export const createTodo = createServerFn()
 				completed: newTodo.completed,
 				dueDate: newTodo.dueDate,
 				tags: newTodo.tags,
+				order: newTodo.order,
 				created: newTodo.created,
 			};
 		} catch (error) {
@@ -64,6 +73,7 @@ export const updateTodo = createServerFn()
 			completed?: boolean;
 			dueDate?: string | null;
 			tags?: string;
+			order?: string;
 		}) => data,
 	)
 	.handler(async ({ data }) => {
@@ -73,6 +83,7 @@ export const updateTodo = createServerFn()
 				completed?: boolean;
 				dueDate?: Date | null;
 				tags?: string;
+				order?: number | null;
 			} = {
 				updated: new Date(),
 			};
@@ -89,6 +100,10 @@ export const updateTodo = createServerFn()
 				updateData.tags = data.tags;
 			}
 
+			if ("order" in data) {
+				updateData.order = data.order ? parseInt(data.order, 10) : null;
+			}
+
 			const [updatedTodo] = await db
 				.update(todos)
 				.set(updateData)
@@ -102,6 +117,7 @@ export const updateTodo = createServerFn()
 				completed: updatedTodo.completed,
 				dueDate: updatedTodo.dueDate,
 				tags: updatedTodo.tags,
+				order: updatedTodo.order,
 				created: updatedTodo.created,
 			};
 

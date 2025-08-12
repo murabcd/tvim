@@ -66,6 +66,8 @@ export function TodoApp() {
 		addTodo,
 		updateDueDate,
 		updateTodoTags,
+		reorderTodos,
+		normalizeOrders,
 		goToTop,
 		goToBottom,
 		yankTodo,
@@ -228,6 +230,8 @@ export function TodoApp() {
 			setSortType("due-date-reverse");
 		} else if (commandValue === "sort-none") {
 			setSortType("none");
+		} else if (commandValue === "normalize-orders") {
+			normalizeOrders(state.todos);
 		} else if (commandValue === "help" || commandValue === "h") {
 			setHelpOpen(true);
 			setCommandValue("");
@@ -252,6 +256,18 @@ export function TodoApp() {
 	const handleVisualMoveDown = () => {
 		const newEnd = Math.min(state.todos.length - 1, visualEnd + 1);
 		setVisualEnd(newEnd);
+	};
+
+	const handleVisualCursorUp = () => {
+		const newIndex = Math.max(0, visualEnd - 1);
+		setVisualStart(newIndex);
+		setVisualEnd(newIndex);
+	};
+
+	const handleVisualCursorDown = () => {
+		const newIndex = Math.min(state.todos.length - 1, visualEnd + 1);
+		setVisualStart(newIndex);
+		setVisualEnd(newIndex);
 	};
 
 	const getVisualSelection = () => {
@@ -338,6 +354,41 @@ export function TodoApp() {
 		}
 	};
 
+	const handleVisualMoveUpDrag = () => {
+		const { start, end } = getVisualSelection();
+		const _selectionSize = end - start + 1;
+
+		// Can't move up if already at the top
+		if (start === 0) return;
+
+		// Move the entire selection up by one position
+		for (let i = start; i <= end; i++) {
+			reorderTodos(i, i - 1);
+		}
+
+		// Update visual selection to follow the moved todos
+		setVisualStart(start - 1);
+		setVisualEnd(end - 1);
+	};
+
+	const handleVisualMoveDownDrag = () => {
+		const { start, end } = getVisualSelection();
+		const _selectionSize = end - start + 1;
+
+		// Can't move down if already at the bottom
+		if (end === state.todos.length - 1) return;
+
+		// Move the entire selection down by one position
+		// Move from bottom to top to avoid index shifting issues
+		for (let i = end; i >= start; i--) {
+			reorderTodos(i, i + 1);
+		}
+
+		// Update visual selection to follow the moved todos
+		setVisualStart(start + 1);
+		setVisualEnd(end + 1);
+	};
+
 	const getSortButtonText = () => {
 		switch (sortType) {
 			case "date-newest":
@@ -384,8 +435,12 @@ export function TodoApp() {
 		onVisualMode: handleVisualMode,
 		onVisualMoveUp: handleVisualMoveUp,
 		onVisualMoveDown: handleVisualMoveDown,
+		onVisualCursorUp: handleVisualCursorUp,
+		onVisualCursorDown: handleVisualCursorDown,
 		onVisualToggle: handleVisualToggle,
 		onVisualDelete: handleVisualDelete,
+		onVisualMoveUpDrag: handleVisualMoveUpDrag,
+		onVisualMoveDownDrag: handleVisualMoveDownDrag,
 		onHelp: () => setHelpOpen(true),
 	});
 
@@ -550,6 +605,7 @@ export function TodoApp() {
 									updateTodoTags(todoIndex, updatedTags);
 								}
 							}}
+							onReorder={reorderTodos}
 						/>
 					)}
 

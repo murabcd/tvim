@@ -29,6 +29,29 @@ export function useTodos() {
 	const [showCompleted, setShowCompleted] = useState(true);
 	const [filterTags, setFilterTags] = useState<string[]>([]);
 
+	// Ordering constants
+	const ORDER_STEP = 1000;
+
+	const normalizeArrayOrders = useCallback((list: Todo[]): Todo[] => {
+		return list.map((todo, index) => ({
+			...todo,
+			order: (index + 1) * ORDER_STEP,
+		}));
+	}, []);
+
+	const hasOrderIssues = useCallback((list: Todo[]): boolean => {
+		if (list.length === 0) return false;
+		const seen = new Set<number>();
+		for (let i = 0; i < list.length; i++) {
+			const ord = list[i].order ?? 0;
+			if (ord <= 0) return true;
+			if (seen.has(ord)) return true;
+			seen.add(ord);
+			if (i > 0 && (list[i - 1].order ?? 0) >= ord) return true;
+		}
+		return false;
+	}, []);
+
 	// Use usehooks-ts useLocalStorage for better localStorage management
 	const [localTodos, setLocalTodos] = useLocalStorage<Todo[]>(
 		LOCAL_TODOS_KEY,
@@ -69,6 +92,7 @@ export function useTodos() {
 					userId: todo.userId || undefined,
 					dueDate: todo.dueDate || undefined,
 					tags: todo.tags ?? undefined,
+					order: todo.order ?? undefined,
 				}))
 			: localTodos;
 
@@ -353,6 +377,24 @@ export function useTodos() {
 			// Extract tags from text
 			const { text: cleanText, tags } = extractTagsFromText(text);
 
+			// Generate order value based on position with wide spacing
+			const generateOrder = (index: number) => {
+				if (currentTodos.length === 0) return ORDER_STEP;
+				if (index === 0) {
+					const firstOrder = currentTodos[0].order ?? ORDER_STEP;
+					const candidate = firstOrder - ORDER_STEP;
+					return candidate > 0 ? candidate : ORDER_STEP / 2; // keep positive
+				}
+				if (index === currentTodos.length) {
+					const lastOrder = currentTodos[currentTodos.length - 1].order ?? 0;
+					return lastOrder + ORDER_STEP;
+				}
+				const prevOrder = currentTodos[index - 1].order ?? index * ORDER_STEP;
+				const nextOrder = currentTodos[index].order ?? (index + 1) * ORDER_STEP;
+				// midpoint while staying integer
+				return Math.max(1, Math.floor((prevOrder + nextOrder) / 2));
+			};
+
 			// Create temporary todo for optimistic update
 			const tempTodo: Todo = {
 				id: `temp-${nanoid()}`,
@@ -365,8 +407,11 @@ export function useTodos() {
 
 			let optimisticTodos: Todo[];
 			let newSelectedIndex: number;
+			let orderValue: number;
 
 			if (position === "above") {
+				orderValue = generateOrder(selectedIndex);
+				tempTodo.order = orderValue;
 				optimisticTodos = [
 					...currentTodos.slice(0, selectedIndex),
 					tempTodo,
@@ -374,6 +419,8 @@ export function useTodos() {
 				];
 				newSelectedIndex = selectedIndex;
 			} else if (position === "below") {
+				orderValue = generateOrder(selectedIndex + 1);
+				tempTodo.order = orderValue;
 				optimisticTodos = [
 					...currentTodos.slice(0, selectedIndex + 1),
 					tempTodo,
@@ -381,6 +428,8 @@ export function useTodos() {
 				];
 				newSelectedIndex = selectedIndex + 1;
 			} else {
+				orderValue = generateOrder(currentTodos.length);
+				tempTodo.order = orderValue;
 				optimisticTodos = [...currentTodos, tempTodo];
 				newSelectedIndex = currentTodos.length;
 			}
@@ -392,10 +441,27 @@ export function useTodos() {
 						text: cleanText,
 						dueDate: dueDate?.toISOString(),
 						tags: formatTags(tags),
+						order: orderValue.toString(),
 					},
 				});
+				// If orders look wrong (non-positive/duplicates), normalize the entire list
+				if (hasOrderIssues(optimisticTodos)) {
+					const normalized = normalizeArrayOrders(optimisticTodos);
+					queryClient.setQueryData(TODOS_QUERY_KEY, normalized);
+					// persist
+					Promise.all(
+						normalized.map((t) =>
+							updateTodoMutation.mutateAsync({
+								data: { id: t.id, order: t.order?.toString() },
+							}),
+						),
+					).catch(() => {});
+				}
 			} else {
-				setLocalTodos(optimisticTodos);
+				const next = hasOrderIssues(optimisticTodos)
+					? normalizeArrayOrders(optimisticTodos)
+					: optimisticTodos;
+				setLocalTodos(next);
 			}
 
 			setSelectedIndex(newSelectedIndex);
@@ -407,6 +473,9 @@ export function useTodos() {
 			isAuthenticated,
 			localTodos,
 			setLocalTodos,
+			hasOrderIssues,
+			normalizeArrayOrders,
+			updateTodoMutation,
 		],
 	);
 
@@ -646,6 +715,85 @@ export function useTodos() {
 		[updateTodoMutation, todos, isAuthenticated, localTodos, setLocalTodos],
 	);
 
+	const normalizeOrders = useCallback(
+		async (todosToNormalize: Todo[]) => {
+			const normalizedTodos = normalizeArrayOrders(todosToNormalize);
+
+			if (isAuthenticated) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, normalizedTodos);
+				// Update all todos in the database with new orders
+				Promise.all(
+					normalizedTodos.map((todo) =>
+						updateTodoMutation.mutateAsync({
+							data: { id: todo.id, order: todo.order?.toString() },
+						}),
+					),
+				).catch((error) => {
+					console.error("Failed to normalize orders:", error);
+				});
+			} else {
+				setLocalTodos(normalizedTodos);
+			}
+		},
+		[
+			queryClient,
+			isAuthenticated,
+			setLocalTodos,
+			updateTodoMutation,
+			normalizeArrayOrders,
+		],
+	);
+
+	const reorderTodos = useCallback(
+		async (oldIndex: number, newIndex: number) => {
+			const currentTodos = isAuthenticated
+				? queryClient.getQueryData<Todo[]>(TODOS_QUERY_KEY) || []
+				: localTodos;
+
+			if (
+				oldIndex === newIndex ||
+				oldIndex < 0 ||
+				newIndex < 0 ||
+				oldIndex >= currentTodos.length ||
+				newIndex >= currentTodos.length
+			) {
+				return;
+			}
+
+			const reorderedTodos = [...currentTodos];
+			const [movedTodo] = reorderedTodos.splice(oldIndex, 1);
+			reorderedTodos.splice(newIndex, 0, movedTodo);
+
+			// Normalize all orders deterministically to avoid duplicates/negatives
+			const normalized = normalizeArrayOrders(reorderedTodos);
+
+			if (isAuthenticated) {
+				queryClient.setQueryData(TODOS_QUERY_KEY, normalized);
+				// Persist all changed orders (small lists so OK)
+				Promise.all(
+					normalized.map((t) =>
+						updateTodoMutation.mutateAsync({
+							data: { id: t.id, order: t.order?.toString() },
+						}),
+					),
+				).catch(() => {});
+			} else {
+				setLocalTodos(normalized);
+			}
+
+			// Update selected index to follow the moved todo
+			setSelectedIndex(newIndex);
+		},
+		[
+			queryClient,
+			isAuthenticated,
+			localTodos,
+			setLocalTodos,
+			updateTodoMutation,
+			normalizeArrayOrders,
+		],
+	);
+
 	const selectAll = useCallback(async () => {
 		if (todos.length === 0) return;
 
@@ -700,6 +848,8 @@ export function useTodos() {
 		toggleTodo,
 		updateDueDate,
 		updateTodoTags,
+		reorderTodos,
+		normalizeOrders,
 		moveSelection,
 		goToTop,
 		goToBottom,

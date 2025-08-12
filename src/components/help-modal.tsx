@@ -154,10 +154,18 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 									- Enter visual mode
 								</div>
 								<div>
+									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">h</kbd>{" "}
+									- Move cursor up
+								</div>
+								<div>
+									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">l</kbd>{" "}
+									- Move cursor down
+								</div>
+								<div>
 									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
 										j/k
 									</kbd>{" "}
-									- Move selection
+									- Extend selection
 								</div>
 								<div>
 									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">x</kbd>{" "}
@@ -166,6 +174,14 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 								<div>
 									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">d</kbd>{" "}
 									- Delete selected
+								</div>
+								<div>
+									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">K</kbd>{" "}
+									- Move selected up
+								</div>
+								<div>
+									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">J</kbd>{" "}
+									- Move selected down
 								</div>
 							</div>
 						</AccordionContent>
@@ -264,6 +280,12 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 										:sort-none
 									</kbd>{" "}
 									- Remove sorting
+								</div>
+								<div>
+									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+										:normalize-orders
+									</kbd>{" "}
+									- Fix duplicate order values
 								</div>
 								<div>
 									<kbd className="px-1 py-0.5 bg-muted rounded text-xs">
